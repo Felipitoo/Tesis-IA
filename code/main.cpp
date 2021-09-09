@@ -1,9 +1,11 @@
 // Your First C++ Program
 #include <iostream>
-#include "Instance.h"
+#include <string>
+#include "../headers/Instance.h"
+
 
 int main() {
-    std::cout << "Hello World! \n";
-    std::cout << "Buenas";
+    std::string filename = "../Instances/paper_colombia.txt";
+    Instance instancia = Instance(filename);
     return 0;
 }

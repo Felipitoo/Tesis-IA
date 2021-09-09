@@ -1,10 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include <string>
-#include "headers/Instance.h"
+#include <sstream>
+
+#include "../headers/Instance.h"
 
 template <class Container>
-void split(const std::string& str, Container& cont, char delim = " ")
+void split(const std::string& str, Container& cont, const char delim)
 {
     std::stringstream ss(str);
     std::string token;
@@ -22,6 +23,23 @@ std::vector<std::vector<int>> createEmptyMatrix(int rows, int columns){
   return matrix;
 }
 
+void print_matrix(std::vector<std::vector<int>> matrix){
+     for(int i = 0 ; i < matrix.size(); i++){
+         for(int j = 0 ; j< matrix[0].size();j++){
+             std::cout << matrix[i][j] << " ";
+         }
+         std::cout << "\n";
+     }
+}
+
+// Funcion para imprimir un vector de valores enteros
+void print_vector(std::vector<int> vect){
+    for(int i = 0 ; i < vect.size(); i++){
+        std::cout << vect[i] << " ";
+        std::cout << "\n";
+    }
+}
+
 
 
 
@@ -29,62 +47,44 @@ Instance::Instance(std::string filename){
   std::ifstream infile(filename);
   std::string mytext;
   bool EWS = false;
-  int i = 0;
+  int i,k = 0;
+  int filas = 0;
   while(std::getline(infile, mytext)){
       std::vector<std::string> words;
       if (i == 1){
-        split(mytext, words);
+        split(mytext, words, ' ');
         this->dimension = std::stoi(words[1]);
         this->costMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->stateMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->typeMatrix = createEmptyMatrix(this->dimension, this->dimension);
       }
       else if (i == 2){
-        split(mytext, words);
+        split(mytext, words, ' ');
         this->capacity = std::stoi(words[1]);      
       }
       else if (i == 3){
-        split(mytext, words);
-        this->trucks = std::vector<Truck>(std::stoi(words[1]));      
+        split(mytext, words, ' ');
+        this->trucks = std::vector<Truck>(std::stoi(words[1]), Truck(capacity));      
       }
       else if (mytext == "EDGE_WEIGHT_SECTION"){
         EWS = true;
       }
       else if (EWS && mytext != "TYPE_OF_ARC"){
-        split(mytext, words);
-        std::vector<std::string> words;
-        split2(mytext, words);
-        for(std::string value: words)  {
-            std::vector<std::string> numeros;
-            split3(value,numeros);
-            std::stringstream geek(numeros[0]);
-            int aux = 0;
-            geek >> aux; 
-            capacidades.push_back(aux);
-            std::stringstream geek2(numeros[1]);
-            geek2 >> aux; 
-            tripulaciones.push_back(aux);
+        split(mytext, words, ' ');
+        std::vector<int> aux;
+        int column= 0;
+        for(std::string costo: words){
+          this->costMatrix[k][column] = std::stoi(costo);
+          column++;      
         }
-
+        k++;
       }
-      else if( i == 2){
-          
-          
-          std::vector<std::string> words;
-          split2(mytext, words);
-          for(std::string value: words)  {
-              std::vector<std::string> numeros;
-              split3(value,numeros);
-              std::stringstream geek(numeros[0]);
-              int aux = 0;
-              geek >> aux; 
-              capacidades.push_back(aux);
-              std::stringstream geek2(numeros[1]);
-              geek2 >> aux; 
-              tripulaciones.push_back(aux);
-          }
+      else if( mytext == "TYPE_OF_ARC"){
+        EWS = false;
       }
       i++;
   }
+  print_matrix(this->costMatrix);
+
 
 }

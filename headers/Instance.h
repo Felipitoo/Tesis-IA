@@ -16,7 +16,6 @@ public:
 
 public:
     Instance(std::string filename);
-    ~Instance();
 
     int getCostMatrix() const;
     int getStateMatrix() const;
