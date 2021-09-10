@@ -6,20 +6,18 @@ class Node {
 public:
     int demand;
     int id;
-    int roadType;
-    int roadCondition;
 
 public:
-    Node(int id, int demand, int roadType, int roadCondtion);
-    ~Node();
+    Node(int id, int demand);
+    // ~Node();
 
-    int getId() const;
-    int getDemand() const;
-    int getRoadType() const;
-    int getRoadCondition() const;
+    // int getId() const;
+    // int getDemand() const;
+    // int getRoadType() const;
+    // int getRoadCondition() const;
 
-    void printAll();
+    // void printAll();
 
-    bool operator==(const Node node) const{return this->getId() == node.getId();}
-    bool operator!=(const Node node) const{ return !operator==(node);}
+    // bool operator==(const Node node) const{return this->getId() == node.getId();}
+    // bool operator!=(const Node node) const{ return !operator==(node);}
 };
