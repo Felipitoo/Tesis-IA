@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
-
+#include <algorithm>
 #include "../headers/Instance.h"
 
 template <class Container>
@@ -206,4 +206,10 @@ Instance::Instance(std::string filename){
   print_matrix(this->damages);
 
 
+}
+
+void Instance::sortTrucks(){
+  std::sort(this->trucks.begin(), this->trucks.end(),
+      [](Truck & a, Truck & b) -> bool
+      { return a.totalCapacity < b.totalCapacity; } );
 }

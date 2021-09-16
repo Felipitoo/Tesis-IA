@@ -3,10 +3,11 @@
 
 class Truck
 {
-private:
-    int id;
+public:
     int totalCapacity;
+    int availableCapacity;
 
 public:
     Truck(int totalCapacity);
+    int getTotalCapacity();
 };
