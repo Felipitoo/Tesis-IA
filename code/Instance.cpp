@@ -57,24 +57,7 @@ std::vector<std::vector<float>> createDamagesMatrix(int rows, int columns){
 //     std::cout << "\n";
 // }
 
-// Funcion para imprimir un vector de valores enteros
-template<typename T>
-void print_vector_gen(std::vector<T> vect){
-    for(int i = 0 ; i < vect.size(); i++){
-        std::cout << vect[i] << " ";
-    }
-    std::cout << "\n";
-}
 
-template<typename T>
-void print_matrix(std::vector<std::vector<T>> matrix){
-     for(int i = 0 ; i < matrix.size(); i++){
-         for(int j = 0 ; j< matrix[0].size();j++){
-             std::cout << matrix[i][j] << " ";
-         }
-         std::cout << "\n";
-     }
-}
 
 
 
@@ -194,7 +177,6 @@ Instance::Instance(std::string filename){
         if(mytext != "TYPE GCVRP"){
           words.clear();
           split(mytext, words, ' ');
-          print_vector_gen(words);
           int id = std::stoi(words[0]) - 1;
           int demand = std::stoi(words[1]);
           Node auxNode = Node(id, demand);
@@ -203,9 +185,6 @@ Instance::Instance(std::string filename){
       }
       i++;
   }
-  print_matrix(this->damages);
-
-
 }
 
 void Instance::sortTrucks(){
