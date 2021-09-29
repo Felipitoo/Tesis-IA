@@ -21,6 +21,8 @@ public:
     Instance(std::string filename);
     void sortTrucks();
     void shuffleNodes();
+    void sortNodes();
+
     // int getCostMatrix() const;
     // int getStateMatrix() const;
     // int getTypeMatrix() const;

@@ -73,7 +73,6 @@ Instance::Instance(std::string filename){
   while(std::getline(infile, mytext)){
       if (i == 1){
         split(mytext, words, ' ');
-        std::cout << mytext << '\n';
         this->dimension = std::stoi(words[1]);
         this->costMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->stateMatrix = createEmptyMatrix(this->dimension, this->dimension);
@@ -191,4 +190,14 @@ void Instance::sortTrucks(){
   std::sort(this->trucks.begin(), this->trucks.end(),
       [](Truck & a, Truck & b) -> bool
       { return a.totalCapacity < b.totalCapacity; } );
+}
+
+void Instance::shuffleNodes(){
+  std::random_shuffle(this->nodes.begin(), this->nodes.end());
+}
+
+void Instance::sortNodes(){
+  std::sort(this->nodes.begin(), this->nodes.end(),
+      [](Node & a, Node & b) -> bool
+      { return a.id < b.id; } );
 }
