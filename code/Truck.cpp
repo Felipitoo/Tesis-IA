@@ -3,7 +3,7 @@
 
 Truck::Truck(int capacidad){
   this->totalCapacity = capacidad;
-  this->availableCapacity = 0;
+  this->availableCapacity = capacidad;
 }
 
 int Truck::getTotalCapacity(){

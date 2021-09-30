@@ -2,6 +2,8 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <random>
+#include <chrono>
 #include "../headers/Instance.h"
 
 template <class Container>
@@ -184,6 +186,7 @@ Instance::Instance(std::string filename){
       }
       i++;
   }
+  this->setTruckIds();
 }
 
 void Instance::sortTrucks(){
@@ -193,11 +196,21 @@ void Instance::sortTrucks(){
 }
 
 void Instance::shuffleNodes(){
-  std::random_shuffle(this->nodes.begin(), this->nodes.end());
+  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::shuffle(this->nodes.begin(), this->nodes.end(), std::default_random_engine(seed));
 }
 
 void Instance::sortNodes(){
   std::sort(this->nodes.begin(), this->nodes.end(),
       [](Node & a, Node & b) -> bool
-      { return a.id < b.id; } );
+      { return a.demand > b.demand; } );
+}
+
+void Instance::setTruckIds(){
+  this->sortTrucks();
+  int i = 0;
+  while(i < this->trucks.size()){
+    this->trucks[i].id = i;
+    i++;
+  }
 }

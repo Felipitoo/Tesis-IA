@@ -4,6 +4,7 @@
 class Truck
 {
 public:
+    int id;
     int totalCapacity;
     int availableCapacity;
 

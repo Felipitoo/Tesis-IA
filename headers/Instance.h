@@ -22,7 +22,7 @@ public:
     void sortTrucks();
     void shuffleNodes();
     void sortNodes();
-
+    void setTruckIds();
     // int getCostMatrix() const;
     // int getStateMatrix() const;
     // int getTypeMatrix() const;
