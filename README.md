@@ -1,4 +1,4 @@
 # Tesis-IA
 Implementación de trabajo de tesis enfocado en el vehicle routing problem with rural conditions
 
-Metodologia Meta-heuristica
+Metodologia Meta-heuristica IA
