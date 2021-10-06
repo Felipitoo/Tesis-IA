@@ -183,6 +183,7 @@ Instance::Instance(std::string filename){
           int demand = std::stoi(words[1]);
           Node auxNode = Node(id, demand);
           this->nodes.push_back(auxNode);
+          this->referenceListNodes.push_back(id);
         }
       }
       i++;
@@ -196,9 +197,9 @@ void Instance::sortTrucks(){
       { return a.totalCapacity < b.totalCapacity; } );
 }
 
-void Instance::shuffleNodes(){
+void Instance::shuffleReferenceListNodes(){
   unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::shuffle(this->nodes.begin(), this->nodes.end(), std::default_random_engine(seed));
+  std::shuffle(this->referenceListNodes.begin(), this->referenceListNodes.end(), std::default_random_engine(seed));
 }
 
 void Instance::sortNodes(){

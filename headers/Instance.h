@@ -14,6 +14,7 @@ public:
     std::vector<std::vector<float>> damages;
     std::vector<Truck> trucks;
     std::vector<Node> nodes;
+    std::vector<int> referenceListNodes;
     int dimension;
     int capacity;
 
@@ -21,7 +22,7 @@ public:
 public:
     Instance(std::string filename);
     void sortTrucks();
-    void shuffleNodes();
+    void shuffleReferenceListNodes();
     void sortNodes();
     void setTruckIds();
     // int getCostMatrix() const;

@@ -67,7 +67,7 @@ bool swapMove(std::vector<int>* route1, std::vector<int>* route2){
 }
 
 // movimiento que inserta un nodo de una ruta en otra ruta (puede agregar a rutas vacias)
-bool insertMove(std::vector<int>* route1, std::vector<int>* route2){
+bool insertMove(int camion1, int camion2, std::vector<int>* route1, std::vector<int>* route2){
     std::random_device random_device;
     std::mt19937 engine{random_device()};
     std::uniform_int_distribution<int> dist(0, route1->size() - 1);
@@ -83,13 +83,14 @@ bool insertMove(std::vector<int>* route1, std::vector<int>* route2){
 // solución greedy que no verifica restricción de daño, solo de capacidades.
 // Ademas permite generar diferentes soluciones greedy cada vez que se llama debido al shuffle de los nodos cliente.
 std::vector<std::vector<int>> greedySolution(Instance* instancia){
-    instancia->shuffleNodes();
+    instancia->shuffleReferenceListNodes();
     //printNodes(instancia->nodes);
     std::vector<Truck> trucks = instancia->trucks;
     std::vector<std::vector<int>> greedySolution(trucks.size());
-    for(Node nodo : instancia->nodes) {
+    for(int referencia : instancia->referenceListNodes) {
         bool assigned = false;
         int i = 0;
+        Node nodo = instancia->nodes[referencia];
         while(assigned == false && i < trucks.size() && nodo.demand != 0){
             if(nodo.demand < trucks[i].availableCapacity){
                 assigned = true;
@@ -104,15 +105,16 @@ std::vector<std::vector<int>> greedySolution(Instance* instancia){
 
 // genera solución random que solo verifica restricción de capacidad
 std::vector<std::vector<int>> randomSolution(Instance* instancia){
-    instancia->shuffleNodes();
+    instancia->shuffleReferenceListNodes();
     std::random_device random_device;
     std::mt19937 engine{random_device()};
     std::uniform_int_distribution<int> dist(0, instancia->trucks.size() - 1);
     std::vector<Truck> trucks = instancia->trucks;
     std::vector<std::vector<int>> randomSolution(trucks.size());
-        for(Node nodo : instancia->nodes) {
+        for(int referencia : instancia->referenceListNodes) {
         bool assigned = false;
         int i = 0;
+        Node nodo = instancia->nodes[referencia];
         while(assigned == false && nodo.demand != 0){
             i = dist(engine);
             if(nodo.demand < trucks[i].availableCapacity){
@@ -165,17 +167,17 @@ float getRouteDamage(std::vector<int> route, Instance instance){
     int initialType = types[0][route[0]];
     int finalState = states[route[route.size()-1]][0];
     int finalType = types[route[route.size()-1]][0];
-            //std::cout << finalState << finalType;
-
-    std::cout << damages[finalState][finalType];
-    std::cout << damages[initialState][initialType];
+    std::cout << initialState << "   " << initialType << "\n";
+    std::cout << finalState << "   " << finalType << "\n";
+    //std::cout << damages[finalState][finalType];
+    //std::cout << damages[initialState][initialType];
 
     cost = damages[initialState][initialType] + damages[finalState][finalType];
     int i = 1;
     while(i < route.size()){
         int arcState = states[route[i-1]][route[i]];
         int arcType = types[route[i-1]][route[i]];
-        std::cout << arcType << arcState;
+        std::cout << arcType << "    " << arcState << "\n";
 
         cost = cost + damages[arcState][arcType];
         i++; 
@@ -187,6 +189,18 @@ float MAX_DAMAGE = 10;
 
 // verifica que no se rompa la restricción de daño
 bool verifyDamageRestriction(std::vector<std::vector<int>> solution, Instance instance){
+    float damage = 0;
+    for(std::vector<int> route: solution){
+        damage = damage + getRouteDamage(route, instance);
+        if (damage > MAX_DAMAGE){
+            return false;
+        }
+    }
+    return true; 
+}
+
+// verifica que no se rompa la restriccion de peso
+bool verifyCapacityRestriction(std::vector<std::vector<int>> solution, Instance instance){
     float damage = 0;
     for(std::vector<int> route: solution){
         damage = damage + getRouteDamage(route, instance);
@@ -222,12 +236,13 @@ int main() {
     Instance instancia = Instance(filename);
     // instancia.trucks[2].totalCapacity = 2000;
     std::vector<std::vector<int>> initialSol = greedySolution(&instancia);
-    //printSolution(initialSol);
+    printSolution(initialSol);
+    printNodes(instancia.nodes);
     //initialSol = greedySolution(&instancia);
     //printSolution(initialSol);
     //std::cout << "\n costo ruta 4"<< ;
-    print_vector(initialSol[0]);
-    std::cout << getRouteDamage({2,3}, instancia);
+    //print_vector(initialSol[0]);
+    //std::cout << getRouteDamage({2,3}, instancia);
     //std::cout << verifyDamageRestriction(initialSol, instancia);
     //print_matrix(initialSol);
     //printTruck(instancia.trucks)23;
