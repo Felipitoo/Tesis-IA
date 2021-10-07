@@ -8,7 +8,7 @@
 // funcion que printea los camiones
 void printTruck(std::vector<Truck> camiones){
   for(Truck camion: camiones){
-    std::cout << camion.totalCapacity;
+    std::cout << camion.availableCapacity;
   }
 }
 
@@ -51,23 +51,37 @@ void printSolution(std::vector<std::vector<int>> solution){
 int swapMoves = 2;
 
 // movimiento tipo swap en que se intercambia 1 o más nodos consecutivos entre dos rutas
-bool swapMove(std::vector<int>* route1, std::vector<int>* route2){
+bool swapMove(Instance* instance, int camion1, int camion2, std::vector<int>* route1, std::vector<int>* route2){
     std::random_device random_device;
     std::mt19937 engine{random_device()};
     int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
     std::uniform_int_distribution<int> dist(0, menor);
     int i = dist(engine);
     int iInicial = i;
-
+    std::vector<int> initialRoute1(*route1);
+    std::vector<int> initialRoute2(*route2);
+    std::vector<Truck> initialTrucks(instance->trucks);
     while(i < route1->size() && i < route2->size() && i < iInicial + swapMoves){ // while verifica que el i no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
+        instance->trucks[camion1].availableCapacity+= instance->nodes[(*route1)[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        instance->trucks[camion2].availableCapacity+= instance->nodes[(*route2)[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
         std::iter_swap(route1->begin() + i, route2->begin() + i);
+        instance->trucks[camion1].availableCapacity-= instance->nodes[(*route1)[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        instance->trucks[camion2].availableCapacity-= instance->nodes[(*route2)[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
         i = i + 1 ;
+    }
+    printTruck(instance->trucks);
+    if(instance->trucks[camion1].availableCapacity < 0 || instance->trucks[camion2].availableCapacity < 0){
+        *route1 = initialRoute1;
+        *route2 = initialRoute2;
+        instance->trucks = initialTrucks;
+        return false;
     }
     return true;
 }
 
 // movimiento que inserta un nodo de una ruta en otra ruta (puede agregar a rutas vacias)
-bool insertMove(int camion1, int camion2, std::vector<int>* route1, std::vector<int>* route2){
+// TODO recalcular disponibilidad y factibilidad del movimiento
+bool insertMove(Instance* instance,int camion1, int camion2, std::vector<int>* route1, std::vector<int>* route2){
     std::random_device random_device;
     std::mt19937 engine{random_device()};
     std::uniform_int_distribution<int> dist(0, route1->size() - 1);
@@ -75,13 +89,30 @@ bool insertMove(int camion1, int camion2, std::vector<int>* route1, std::vector<
     
     int seleccionado = dist(engine);
     int dondeInsertar = dist2(engine);
-    route2->insert(route2->begin() + dondeInsertar, (*route1)[seleccionado]);
+    int nodoAInsertar = (*route1)[seleccionado];
+    std::vector<int> initialRoute1(*route1);
+    std::vector<int> initialRoute2(*route2);
+    std::vector<Truck> initialTrucks(instance->trucks);
+    printTruck(initialTrucks);
+    route2->insert(route2->begin() + dondeInsertar, nodoAInsertar);
+    instance->trucks[camion2].availableCapacity-= instance->nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
     route1->erase(route1->begin() + seleccionado);
+    instance->trucks[camion1].availableCapacity+= instance->nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+    printTruck(instance->trucks);
+    std::cout << seleccionado;
+    if(instance->trucks[camion2].availableCapacity < 0){
+        *route1 = initialRoute1;
+        *route2 = initialRoute2;
+        instance->trucks = initialTrucks;
+        return false;
+    }
     return true;
 }
 
 // solución greedy que no verifica restricción de daño, solo de capacidades.
 // Ademas permite generar diferentes soluciones greedy cada vez que se llama debido al shuffle de los nodos cliente.
+// TODO recalcular disponibilidad y factibilidad del movimiento
+
 std::vector<std::vector<int>> greedySolution(Instance* instancia){
     instancia->shuffleReferenceListNodes();
     //printNodes(instancia->nodes);
@@ -100,6 +131,7 @@ std::vector<std::vector<int>> greedySolution(Instance* instancia){
             i++;
         }
     }
+    instancia->trucks = trucks;
     return greedySolution;
 }
 
@@ -125,6 +157,7 @@ std::vector<std::vector<int>> randomSolution(Instance* instancia){
             i++;
         }
     }
+    instancia->trucks = trucks;
     return randomSolution;
 }
 
@@ -236,8 +269,15 @@ int main() {
     Instance instancia = Instance(filename);
     // instancia.trucks[2].totalCapacity = 2000;
     std::vector<std::vector<int>> initialSol = greedySolution(&instancia);
+    printTruck(instancia.trucks);
+    std::cout << "\n";
     printSolution(initialSol);
-    printNodes(instancia.nodes);
+    insertMove(&instancia,0,1,&initialSol[0],&initialSol[1]);
+    printSolution(initialSol);
+
+    //printSolution(initialSol);
+    //printNodes(instancia.nodes);
+    //printTruck(instancia.trucks);
     //initialSol = greedySolution(&instancia);
     //printSolution(initialSol);
     //std::cout << "\n costo ruta 4"<< ;
