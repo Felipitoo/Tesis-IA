@@ -25,6 +25,15 @@ std::vector<std::vector<int>> createEmptyMatrix(int rows, int columns){
   return matrix;
 }
 
+std::vector<std::vector<float>> createEmptyMatrixFloat(int rows, int columns){
+  int i;
+  std::vector<std::vector<float>> matrix(rows);
+  for(i = 0 ; i < rows; i++){
+      matrix[i].resize(columns);
+  }
+  return matrix;
+}
+
 std::vector<std::vector<float>> createDamagesMatrix(int rows, int columns){
   int i;
   std::vector<std::vector<float>> matrix(rows);
@@ -76,7 +85,7 @@ Instance::Instance(std::string filename){
       if (i == 1){
         split(mytext, words, ' ');
         this->dimension = std::stoi(words[1]);
-        this->costMatrix = createEmptyMatrix(this->dimension, this->dimension);
+        this->costMatrix = createEmptyMatrixFloat(this->dimension, this->dimension);
         this->stateMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->typeMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->distanceMatrix = createEmptyMatrix(this->dimension, this->dimension);
@@ -100,7 +109,8 @@ Instance::Instance(std::string filename){
         split(mytext, words, ' ');
         int column= 0;
         for(std::string costo: words){
-          this->costMatrix[k][column] = std::stoi(costo);
+          std::cout << costo << "\n";
+          this->costMatrix[k][column] = std::stof(costo);
           column++;      
         }
         k++;

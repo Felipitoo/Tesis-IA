@@ -7,7 +7,7 @@
 
 class Instance {
 public:
-    std::vector<std::vector<int>> costMatrix; // Matriz de costos segun formula del modelo
+    std::vector<std::vector<float>> costMatrix; // Matriz de costos segun formula del modelo
     std::vector<std::vector<int>> stateMatrix; // estado del arco del grafo
     std::vector<std::vector<int>> typeMatrix; // tipo de arco del grafo
     std::vector<std::vector<int>> distanceMatrix; // distancia entre los nodos

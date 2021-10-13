@@ -93,13 +93,10 @@ bool insertMove(Instance* instance,int camion1, int camion2, std::vector<int>* r
     std::vector<int> initialRoute1(*route1);
     std::vector<int> initialRoute2(*route2);
     std::vector<Truck> initialTrucks(instance->trucks);
-    printTruck(initialTrucks);
     route2->insert(route2->begin() + dondeInsertar, nodoAInsertar);
     instance->trucks[camion2].availableCapacity-= instance->nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
     route1->erase(route1->begin() + seleccionado);
     instance->trucks[camion1].availableCapacity+= instance->nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-    printTruck(instance->trucks);
-    std::cout << seleccionado;
     if(instance->trucks[camion2].availableCapacity < 0){
         *route1 = initialRoute1;
         *route2 = initialRoute2;
@@ -167,7 +164,7 @@ int getRouteCost(std::vector<int> route, Instance instance){
     if(route.size() == 0){
         return cost;
     }
-    std::vector<std::vector<int>> matrix = instance.costMatrix;
+    std::vector<std::vector<float>> matrix = instance.costMatrix;
     cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
     int i = 1;
     //std::cout << instance.costMatrix[0][route[0]];
@@ -218,26 +215,26 @@ float getRouteDamage(std::vector<int> route, Instance instance){
     return cost;
 }
 
+// float getSolutionFuntionObjective(std::vector<std::vector<int>> solution){
+    
+// }
+
 float MAX_DAMAGE = 10;
 
 // verifica que no se rompa la restricción de daño
-bool verifyDamageRestriction(std::vector<std::vector<int>> solution, Instance instance){
+float getSolutionTotalDamage(std::vector<std::vector<int>> solution, Instance instance){
     float damage = 0;
     for(std::vector<int> route: solution){
         damage = damage + getRouteDamage(route, instance);
-        if (damage > MAX_DAMAGE){
-            return false;
-        }
     }
-    return true; 
+    return damage; 
 }
 
 // verifica que no se rompa la restriccion de peso
 bool verifyCapacityRestriction(std::vector<std::vector<int>> solution, Instance instance){
     float damage = 0;
-    for(std::vector<int> route: solution){
-        damage = damage + getRouteDamage(route, instance);
-        if (damage > MAX_DAMAGE){
+    for(Truck truck: instance.trucks){
+        if (truck.availableCapacity < 0){
             return false;
         }
     }
@@ -246,7 +243,7 @@ bool verifyCapacityRestriction(std::vector<std::vector<int>> solution, Instance 
 
 int main() {
     //std::string filename = "../Instances/paper_colombia.txt";
-    std::string filename = "test_file.txt";
+    std::string filename = "/mnt/c/Users/felip/Desktop/Tesis-IA/Tesis-IA/Instances/E-n76-k7.rvrp";
     std::vector<int> a = {1,2,3};
     std::vector<int> b = {4,5,6};
     std::vector<int> c = {};
