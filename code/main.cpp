@@ -8,7 +8,7 @@
 // funcion que printea los camiones
 void printTruck(std::vector<Truck> camiones){
   for(Truck camion: camiones){
-    std::cout << camion.availableCapacity;
+    std::cout << camion.availableCapacity << "\n";
   }
 }
 
@@ -54,22 +54,26 @@ int swapMoves = 2;
 bool swapMove(Instance* instance, int camion1, int camion2, std::vector<int>* route1, std::vector<int>* route2){
     std::random_device random_device;
     std::mt19937 engine{random_device()};
-    int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
-    std::uniform_int_distribution<int> dist(0, menor);
+    //int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
+    std::uniform_int_distribution<int> dist(0, route1->size() - 1);
+    std::uniform_int_distribution<int> dist2(0, route2->size() - 1);
     int i = dist(engine);
+    int j = dist2(engine);
     int iInicial = i;
+    int jInicial = j;
     std::vector<int> initialRoute1(*route1);
     std::vector<int> initialRoute2(*route2);
     std::vector<Truck> initialTrucks(instance->trucks);
-    while(i < route1->size() && i < route2->size() && i < iInicial + swapMoves){ // while verifica que el i no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
+    while(i < route1->size() && j < route2->size() && i < iInicial + swapMoves && j < jInicial + swapMoves){ // while verifica que el i/j no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
         instance->trucks[camion1].availableCapacity+= instance->nodes[(*route1)[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        instance->trucks[camion2].availableCapacity+= instance->nodes[(*route2)[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        std::iter_swap(route1->begin() + i, route2->begin() + i);
+        instance->trucks[camion2].availableCapacity+= instance->nodes[(*route2)[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        std::iter_swap(route1->begin() + i, route2->begin() + j);
         instance->trucks[camion1].availableCapacity-= instance->nodes[(*route1)[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
-        instance->trucks[camion2].availableCapacity-= instance->nodes[(*route2)[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        instance->trucks[camion2].availableCapacity-= instance->nodes[(*route2)[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
         i = i + 1 ;
+        j = j + 1 ;
     }
-    printTruck(instance->trucks);
+    printTruck(initialTrucks);
     if(instance->trucks[camion1].availableCapacity < 0 || instance->trucks[camion2].availableCapacity < 0){
         *route1 = initialRoute1;
         *route2 = initialRoute2;
@@ -269,7 +273,7 @@ int main() {
     printTruck(instancia.trucks);
     std::cout << "\n";
     printSolution(initialSol);
-    insertMove(&instancia,0,1,&initialSol[0],&initialSol[1]);
+    swapMove(&instancia,0,1,&initialSol[0],&initialSol[1]);
     printSolution(initialSol);
 
     //printSolution(initialSol);
