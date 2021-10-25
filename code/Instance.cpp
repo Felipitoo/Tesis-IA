@@ -43,6 +43,11 @@ std::vector<std::vector<float>> createDamagesMatrix(int rows, int columns){
   return matrix;
 }
 
+std::vector<float> createEmptyVector(int dimension){
+  std::vector<float> vect(dimension, 0);
+  return vect;
+}
+
 // void print_matrix(std::vector<std::vector<int>> matrix){
 //      for(int i = 0 ; i < matrix.size(); i++){
 //          for(int j = 0 ; j< matrix[0].size();j++){
@@ -99,7 +104,9 @@ Instance::Instance(std::string filename){
       }
       else if (i == 3){
         split(mytext, words, ' ');
-        this->trucks = std::vector<Truck>(std::stoi(words[1]), Truck(capacity));
+        int amountTrucks = std::stoi(words[1]);
+        this->trucks = std::vector<Truck>(amountTrucks, Truck(capacity));
+        this->averageDamages = createEmptyVector(amountTrucks);
         words.clear();    
       }
       else if (mytext == "EDGE_WEIGHT_SECTION"){
@@ -109,7 +116,6 @@ Instance::Instance(std::string filename){
         split(mytext, words, ' ');
         int column= 0;
         for(std::string costo: words){
-          std::cout << costo << "\n";
           this->costMatrix[k][column] = std::stof(costo);
           column++;      
         }

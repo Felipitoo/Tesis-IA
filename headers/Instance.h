@@ -15,6 +15,7 @@ public:
     std::vector<Truck> trucks;
     std::vector<Node> nodes;
     std::vector<int> referenceListNodes;
+    std::vector<float> averageDamages;
     int dimension;
     int capacity;
 
