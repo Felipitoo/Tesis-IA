@@ -1,20 +1,25 @@
 #pragma once
 #include <iostream>
 #include <vector>
-#include "Route.h"
+#include "Truck.h"
 class Solution
 {
-private:
-    std::vector<Route> solution;
-    int solutionCost;
+public:
+    std::vector<std::vector<int>> sol;
+    std::vector<float> damagesActual;
+    std::vector<float> damagesNeighbour;
+    std::vector<float> costsActual;
+    std::vector<float> costsNeighbour;
+    float totalCostActual;
+    float totalCostNeighbour;
+    float totalCostBest;
+    std::vector<std::vector<int>> actual;
+    std::vector<std::vector<int>> neighbour;
+    std::vector<std::vector<int>> best;
+    std::vector<Truck> trucks;
 
 public:
-    Solution(int solutionCost, std::vector<Route> routes = {});
-    ~Solution();
+    Solution(std::vector<std::vector<int>> solution);
 
-    int getSolution() const;
-    int getSolutionCost() const;
-
-    void printAll();
 
 };
