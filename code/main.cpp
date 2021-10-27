@@ -4,13 +4,17 @@
 #include <algorithm>
 #include <chrono>
 #include <random>
+#include <cmath>
+#include <math.h>
 #include "../headers/Instance.h"
 #include "../headers/Solution.h"
 
 
 // Constants
-float MAX_DAMAGE = 10;
+float MAX_DAMAGE = 2;
 int swapMoves = 2;
+const double EulerConstant = std::exp(1.0);
+
 
 
 
@@ -211,7 +215,7 @@ int getRouteCost(int truck,std::vector<int> route, Instance instance, std::vecto
         i++; 
     }
     punishCost = damages[truck] > MAX_DAMAGE ? damages[truck] - MAX_DAMAGE: 0;
-    // std::cout << punishCost << "punish cost\n";
+    //std::cout << punishCost << "punish cost\n";
     cost = cost * (1 + punishCost); 
     return cost;
 }
@@ -275,12 +279,14 @@ void getSolutionDamages(Instance instance, Solution* solution){
     int i = 0;
     for(std::vector<int> route: solution->actual){
         damage = getRouteDamage(route, instance);
+        //std::cout << damage << "actual \n";
         solution->damagesActual[i] = damage;
         i++;
     }
     i = 0;
     for(std::vector<int> route: solution->neighbour){
         damage = getRouteDamage(route, instance);
+        //std::cout << damage << "neighbour \n";
         solution->damagesNeighbour[i] = damage;
         i++;
     }
@@ -309,15 +315,61 @@ std::vector<int> getRandomTrucks(int trucks){
   return coupleTrucks;
 }
 
+float getRandomChance(){
+  std::random_device rd;
+  std::default_random_engine eng(rd());
+  std::uniform_real_distribution<float> distr(0, 1);
+  return distr(eng);
+}
+
+float getInitialTemperature(Instance instance){
+  Solution solution = randomSolution(instance);
+  getSolutionDamages(instance, &solution);
+  getSolutionCost(instance, &solution);
+  int i = 0;
+  double mayor = 0;
+  while(i < 1000){
+    std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size());
+    bool aceptado = false;
+    while(aceptado != true){
+      //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
+      aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+      randomTrucks = getRandomTrucks(instance.trucks.size());
+    };
+    
+    getSolutionDamages(instance, &solution);
+    getSolutionCost(instance, &solution);      
+    std::cout << "---------------\n";
+    std::cout << solution.totalCostActual << "\n";
+    std::cout << solution.totalCostNeighbour << "\n";
+    std::cout << "---------------\n";
+    double delta = solution.totalCostNeighbour - solution.totalCostActual;
+    i++;
+    solution.totalCostActual = 0;
+    solution.totalCostNeighbour = 0;
+    if(delta > mayor){
+      mayor = delta;
+    }
+  }
+
+  return mayor;
+}
+
+
+
 Solution simulatedAnnealing(Instance instance){
   Solution solution = greedySolution(instance);
   printSolution(solution.actual);
-  solution.best = solution.actual;
   getSolutionDamages(instance, &solution);
   getSolutionCost(instance, &solution);
-  float To = 100;
-  float c = 0.01;
-  float Tend = 1;
+  solution.best = solution.actual;
+  solution.totalCostBest = solution.totalCostActual;
+
+  int cambiosAceptados = 0;
+  int peoresAceptadas = 0;
+  float To = getInitialTemperature(instance);
+  float c = 0.95;
+  float Tend = 1000;
   int lvlLoop = 100;
   while(To > Tend){
     To = To * c;
@@ -332,24 +384,43 @@ Solution simulatedAnnealing(Instance instance){
       
       getSolutionDamages(instance, &solution);
       getSolutionCost(instance, &solution);      
-      // std::cout << "---------------\n";
-      // std::cout << solution.totalCostActual << "\n";
-      // std::cout << solution.totalCostNeighbour << "\n";
-      // std::cout << "---------------\n";
+      std::cout << "---------------\n";
+      std::cout << solution.totalCostActual << "\n";
+      std::cout << solution.totalCostNeighbour << "\n";
+      std::cout << "---------------\n";
       if (solution.totalCostNeighbour < solution.totalCostActual){
         solution.actual = solution.neighbour;
         solution.totalCostActual = solution.totalCostNeighbour;
-        solution.best =  solution.neighbour;
-        solution.totalCostBest =  solution.totalCostNeighbour;
-        std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
+        // std::cout << "---------------\n";
+        // std::cout << solution.totalCostActual << "actual \n";
+        // std::cout << solution.totalCostBest << "mejor \n";
+        // std::cout << "---------------\n";
+        if(solution.totalCostNeighbour < solution.totalCostBest){
+            solution.best =  solution.neighbour;
+            solution.totalCostBest =  solution.totalCostNeighbour;
+            std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
+            cambiosAceptados++;
+        }
+      }
+      else{
+        int delta = solution.totalCostNeighbour - solution.totalCostActual;
+        //std::cout << delta << "delta \n";
+        double P = std::pow(EulerConstant, -delta/To);
+        //std::cout << P << "chance of acceptance \n";
+        double randomChance = getRandomChance();
+        if( P > randomChance){
+          solution.actual = solution.neighbour;
+          peoresAceptadas++;
+        }
       }
       solution.totalCostActual = 0;
       solution.totalCostNeighbour = 0;
-      solution.totalCostBest = 0;
-
+      //solution.totalCostBest = 0;
     }
 
   }
+  std::cout << cambiosAceptados << "cambios aceptados\n";
+  std::cout << peoresAceptadas << "peores aceptados\n";
   return solution;
 }
 
@@ -372,6 +443,7 @@ int main() {
 
     // printSolution(gred.actual);
     printSolution(simulatedAnnealing(instancia).best);
+    //std::cout << getInitialTemperature(instancia);
 
 
     return 0;
