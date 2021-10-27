@@ -84,7 +84,6 @@ Instance::Instance(std::string filename){
   bool EWS, TOA, COA, D, DAM = false;
   int i = 0;
   int k = 0;
-  int filas = 0;
   std::vector<std::string> words;
   while(std::getline(infile, mytext)){
       if (i == 1){
@@ -226,7 +225,7 @@ void Instance::sortNodes(){
 
 void Instance::setTruckIds(){
   this->sortTrucks();
-  int i = 0;
+  size_t i = 0;
   while(i < this->trucks.size()){
     this->trucks[i].id = i;
     i++;
