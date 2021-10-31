@@ -352,7 +352,6 @@ float getInitialTemperature(Instance instance){
       if(aceptado == false){
         aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
       }
-      print_vector(randomTrucks);
       //print_vector(randomTrucks);
     };
       // std::cout << "---------------\n";
