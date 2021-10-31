@@ -14,7 +14,10 @@
 float MAX_DAMAGE = 2;
 int swapMoves = 2;
 const double EulerConstant = std::exp(1.0);
-
+unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+float c = 0.95;
+float Tend = 1;
+int lvlLoop = 100;
 
 
 
@@ -84,18 +87,18 @@ bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
     size_t jInicial = j;
     std::vector<int> initialRoute1(route1);
     std::vector<int> initialRoute2(route2);
-    std::vector<Truck> initialTrucks(solution->trucks);
+    solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
+    //std::vector<Truck> initialActualTrucks(solution->trucksActual);
     while(i < route1.size() && j < route2.size() && (i < iInicial + swapMoves) && (j < jInicial + swapMoves)){ // while verifica que el i/j no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
-        solution->trucks[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        solution->trucks[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        solution->trucksNeighbour[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        solution->trucksNeighbour[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
         std::iter_swap(route1.begin() + i, route2.begin() + j);
-        solution->trucks[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
-        solution->trucks[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        solution->trucksNeighbour[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        solution->trucksNeighbour[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
         i = i + 1 ;
         j = j + 1 ;
     }
-    if((solution->trucks[camion1].availableCapacity < 0) || (solution->trucks[camion2].availableCapacity < 0)){
-        solution->trucks = initialTrucks;
+    if((solution->trucksNeighbour[camion1].availableCapacity < 0) || (solution->trucksNeighbour[camion2].availableCapacity < 0)){
         return false;
     }
     //print_vector(route1);
@@ -125,18 +128,19 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
     int seleccionado = dist(engine);
     int dondeInsertar = dist2(engine);
     int nodoAInsertar = route1[seleccionado];
-    std::vector<Truck> initialTrucks(solution->trucks);
+    solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
+    //std::vector<Truck> initialTrucks(solution->trucks);
     route2.insert(route2.begin() + dondeInsertar, nodoAInsertar);
-    solution->trucks[camion2].availableCapacity-= instance.nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+    solution->trucksNeighbour[camion2].availableCapacity-= instance.nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
     // std::cout << "ruta 1 : ";
     // print_vector(route1);
     // std::cout << "ruta 2 : ";
     // print_vector(route2);
     // std::cout << "seleccionado " << seleccionado << " route 1 size :" << route1.size() << " dondeInsertar " << dondeInsertar << "\n"; 
     route1.erase(route1.begin() + seleccionado);
-    solution->trucks[camion1].availableCapacity+= instance.nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-    if(solution->trucks[camion2].availableCapacity < 0){
-        solution->trucks = initialTrucks;
+    solution->trucksNeighbour[camion1].availableCapacity+= instance.nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+    if(solution->trucksNeighbour[camion2].availableCapacity < 0){
+        //solution->trucks = initialTrucks;
         return false;
     }
     // print_vector(aux);
@@ -149,7 +153,7 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
 // Ademas permite generar diferentes soluciones greedy cada vez que se llama debido al shuffle de los nodos cliente.
 
 Solution greedySolution(Instance instancia){
-    instancia.shuffleReferenceListNodes();
+    instancia.shuffleReferenceListNodes(seed);
     //printNodes(instancia->nodes);
     std::vector<Truck> trucks = instancia.trucks;
     std::vector<std::vector<int>> greedySolution(trucks.size());
@@ -167,14 +171,15 @@ Solution greedySolution(Instance instancia){
         }
     }
     Solution greedy = Solution(greedySolution);
-    greedy.trucks = trucks;
+    greedy.trucksActual = trucks;
+    greedy.trucksNeighbour = trucks;
 
     return greedy;
 }
 
 // genera solución random que solo verifica restricción de capacidad
 Solution randomSolution(Instance instancia){
-    instancia.shuffleReferenceListNodes();
+    instancia.shuffleReferenceListNodes(seed);
     std::random_device random_device;
     std::mt19937 engine{random_device()};
     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
@@ -195,13 +200,15 @@ Solution randomSolution(Instance instancia){
           }
     }
     Solution random = Solution(randomSolution);
-    random.trucks = trucks;
+    random.trucksActual = trucks;
+    random.trucksNeighbour = trucks;
+
     return random;
 }
 
 // obtiene el costo de una ruta. Asigna cero si la ruta esta vacia
-int getRouteCost(int truck,std::vector<int> route, Instance instance, std::vector<float> damages){
-    int cost = 0;
+double getRouteCost(int truck,std::vector<int> route, Instance instance, std::vector<float> damages){
+    double cost = 0;
     float punishCost = 0;
     if(route.size() == 0){
         return cost;
@@ -211,6 +218,8 @@ int getRouteCost(int truck,std::vector<int> route, Instance instance, std::vecto
     size_t i = 1;
     //std::cout << instance.costMatrix[0][route[0]];
     while(i < route.size()){
+        //std::cout << cost << " cost\n";
+        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
         cost = cost + (instance.costMatrix)[route[i-1]][route[i]];
         i++; 
     }
@@ -222,7 +231,7 @@ int getRouteCost(int truck,std::vector<int> route, Instance instance, std::vecto
 
 // calcula el costo de la solución
 void getSolutionCost(Instance instance, Solution* solution){
-    int cost = 0;
+    double cost = 0;
     int i = 0;
     for(std::vector<int> route: solution->actual){
         cost = 0;
@@ -304,10 +313,10 @@ void getSolutionDamages(Instance instance, Solution* solution){
 // }
 
 
-std::vector<int> getRandomTrucks(int trucks){
+std::vector<int> getRandomTrucks(int trucks, unsigned seed){
   std::vector<int> v(trucks);
   std::iota(v.begin(), v.end(), 0);
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+  //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::shuffle(v.begin(), v.end(), std::default_random_engine(seed));
   std::vector<int> coupleTrucks;
   coupleTrucks.push_back(v[0]);
@@ -315,9 +324,9 @@ std::vector<int> getRandomTrucks(int trucks){
   return coupleTrucks;
 }
 
-float getRandomChance(){
-  std::random_device rd;
-  std::default_random_engine eng(rd());
+float getRandomChance(unsigned seed){
+  //std::random_device rd;
+  std::default_random_engine eng(seed);
   std::uniform_real_distribution<float> distr(0, 1);
   return distr(eng);
 }
@@ -329,20 +338,16 @@ float getInitialTemperature(Instance instance){
   int i = 0;
   double mayor = 0;
   while(i < 1000){
-    std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size());
+    std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
     bool aceptado = false;
     while(aceptado != true){
       //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
       aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
-      randomTrucks = getRandomTrucks(instance.trucks.size());
+      randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
     };
     
     getSolutionDamages(instance, &solution);
     getSolutionCost(instance, &solution);      
-    std::cout << "---------------\n";
-    std::cout << solution.totalCostActual << "\n";
-    std::cout << solution.totalCostNeighbour << "\n";
-    std::cout << "---------------\n";
     double delta = solution.totalCostNeighbour - solution.totalCostActual;
     i++;
     solution.totalCostActual = 0;
@@ -368,29 +373,34 @@ Solution simulatedAnnealing(Instance instance){
   int cambiosAceptados = 0;
   int peoresAceptadas = 0;
   float To = getInitialTemperature(instance);
-  float c = 0.95;
-  float Tend = 1000;
-  int lvlLoop = 100;
   while(To > Tend){
     To = To * c;
     for(int i=0; i < lvlLoop; i++){
-      std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size());
+      solution.neighbour = solution.actual;
+      solution.totalCostNeighbour = solution.totalCostActual;
+      solution.trucksNeighbour = solution.trucksActual;
+      solution.damagesNeighbour = solution.damagesActual;
+      std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
       bool aceptado = false;
       while(aceptado != true){
         //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
         aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
-        randomTrucks = getRandomTrucks(instance.trucks.size());
+        randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
+        print_vector(randomTrucks);
+        std::cout << "camiones random \n";
       };
       
       getSolutionDamages(instance, &solution);
       getSolutionCost(instance, &solution);      
-      std::cout << "---------------\n";
-      std::cout << solution.totalCostActual << "\n";
-      std::cout << solution.totalCostNeighbour << "\n";
-      std::cout << "---------------\n";
+      // std::cout << "---------------\n";
+      // std::cout << solution.totalCostActual << "\n";
+      // std::cout << solution.totalCostNeighbour << "\n";
+      // std::cout << "---------------\n";
       if (solution.totalCostNeighbour < solution.totalCostActual){
         solution.actual = solution.neighbour;
         solution.totalCostActual = solution.totalCostNeighbour;
+        solution.trucksActual = solution.trucksNeighbour;
+        solution.damagesActual = solution.damagesNeighbour;
         // std::cout << "---------------\n";
         // std::cout << solution.totalCostActual << "actual \n";
         // std::cout << solution.totalCostBest << "mejor \n";
@@ -407,9 +417,12 @@ Solution simulatedAnnealing(Instance instance){
         //std::cout << delta << "delta \n";
         double P = std::pow(EulerConstant, -delta/To);
         //std::cout << P << "chance of acceptance \n";
-        double randomChance = getRandomChance();
+        double randomChance = getRandomChance(seed);
         if( P > randomChance){
           solution.actual = solution.neighbour;
+          solution.totalCostActual = solution.totalCostNeighbour;
+          solution.trucksActual = solution.trucksNeighbour;
+          solution.damagesActual = solution.damagesNeighbour;
           peoresAceptadas++;
         }
       }
@@ -426,7 +439,7 @@ Solution simulatedAnnealing(Instance instance){
 
 int main() {
     //std::string filename = "../Instances/paper_colombia.txt";
-    std::string filename = "/mnt/c/Users/felip/Desktop/Tesis-IA/Tesis-IA/Instances/paper_colombia.txt";
+    std::string filename = "/mnt/c/Users/felip/Desktop/Tesis-IA/Tesis-IA/Instances/E-n76-k7.rvrp";
     std::vector<int> a = {1,2,3};
     std::vector<int> b = {4,5,6};
     std::vector<int> c = {7,8};

@@ -128,7 +128,7 @@ Instance::Instance(std::string filename){
       }
       else if (TOA == true && mytext != "CONDITION_OF_ARC"){
         split(mytext, words, ' ');
-        // std::cout << "Linea  " << mytext << '\n';
+        //std::cout << "Linea  " << mytext << '\n';
         int column= 0;
         for(std::string costo: words){
           // std::cout << "Type  " << std::stoi(costo) << '\n';
@@ -212,8 +212,8 @@ void Instance::sortTrucks(){
       { return a.totalCapacity < b.totalCapacity; } );
 }
 
-void Instance::shuffleReferenceListNodes(){
-  unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+void Instance::shuffleReferenceListNodes(unsigned seed){
+  // unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
   std::shuffle(this->referenceListNodes.begin(), this->referenceListNodes.end(), std::default_random_engine(seed));
 }
 

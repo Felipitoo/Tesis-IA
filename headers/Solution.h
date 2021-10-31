@@ -5,7 +5,6 @@
 class Solution
 {
 public:
-    std::vector<std::vector<int>> sol;
     std::vector<float> damagesActual;
     std::vector<float> damagesNeighbour;
     std::vector<float> costsActual;
@@ -16,7 +15,8 @@ public:
     std::vector<std::vector<int>> actual;
     std::vector<std::vector<int>> neighbour;
     std::vector<std::vector<int>> best;
-    std::vector<Truck> trucks;
+    std::vector<Truck> trucksActual;
+    std::vector<Truck> trucksNeighbour;
 
 public:
     Solution(std::vector<std::vector<int>> solution);

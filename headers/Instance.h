@@ -23,7 +23,7 @@ public:
 public:
     Instance(std::string filename);
     void sortTrucks();
-    void shuffleReferenceListNodes();
+    void shuffleReferenceListNodes(unsigned seed);
     void sortNodes();
     void setTruckIds();
     // int getCostMatrix() const;
