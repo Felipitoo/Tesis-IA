@@ -14,12 +14,17 @@
 float MAX_DAMAGE = 2;
 int swapMoves = 2;
 const double EulerConstant = std::exp(1.0);
-unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+//unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+size_t seed = 21;
 float c = 0.95;
 float Tend = 1;
 int lvlLoop = 100;
 
-
+size_t generateSeed(){
+  seed = seed + 1;
+  //std::cout << seed << "\n";
+  return seed;
+}
 
 // funcion que printea los camiones
 void printTruck(std::vector<Truck> camiones){
@@ -76,8 +81,8 @@ bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
     std::vector<int> route1(solution->neighbour[camion1]);
     std::vector<int> route2(solution->neighbour[camion2]);
     if(route1.size() == 0 || route2.size() == 0) return false;
-    std::random_device random_device;
-    std::mt19937 engine{random_device()};
+    //std::random_device random_device;
+    std::mt19937 engine{generateSeed()};
     //int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
     std::uniform_int_distribution<int> dist(0, route1.size() - 1);
     std::uniform_int_distribution<int> dist2(0, route2.size() - 1);
@@ -115,8 +120,8 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
     std::vector<int> route2(solution->neighbour[camion2]);
     std::vector<int> aux;
     if(route1.size() < 1) return false;
-    std::random_device random_device;
-    std::mt19937 engine{random_device()};
+    //std::random_device random_device;
+    std::mt19937 engine{generateSeed()};
     std::uniform_int_distribution<int> dist(0, route1.size() - 1);
     int n2 = 0;
     if(route2.size() > 0){
@@ -153,7 +158,7 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
 // Ademas permite generar diferentes soluciones greedy cada vez que se llama debido al shuffle de los nodos cliente.
 
 Solution greedySolution(Instance instancia){
-    instancia.shuffleReferenceListNodes(seed);
+    instancia.shuffleReferenceListNodes(generateSeed());
     //printNodes(instancia->nodes);
     std::vector<Truck> trucks = instancia.trucks;
     std::vector<std::vector<int>> greedySolution(trucks.size());
@@ -179,9 +184,9 @@ Solution greedySolution(Instance instancia){
 
 // genera solución random que solo verifica restricción de capacidad
 Solution randomSolution(Instance instancia){
-    instancia.shuffleReferenceListNodes(seed);
-    std::random_device random_device;
-    std::mt19937 engine{random_device()};
+    instancia.shuffleReferenceListNodes(generateSeed());
+    //std::random_device random_device;
+    std::mt19937 engine{generateSeed()};
     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
     std::vector<Truck> trucks = instancia.trucks;
     std::vector<std::vector<int>> randomSolution(trucks.size());
@@ -317,7 +322,7 @@ std::vector<int> getRandomTrucks(int trucks, unsigned seed){
   std::vector<int> v(trucks);
   std::iota(v.begin(), v.end(), 0);
   //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-  std::shuffle(v.begin(), v.end(), std::default_random_engine(seed));
+  std::shuffle(v.begin(), v.end(), std::default_random_engine(generateSeed()));
   std::vector<int> coupleTrucks;
   coupleTrucks.push_back(v[0]);
   coupleTrucks.push_back(v[1]);
@@ -326,7 +331,7 @@ std::vector<int> getRandomTrucks(int trucks, unsigned seed){
 
 float getRandomChance(unsigned seed){
   //std::random_device rd;
-  std::default_random_engine eng(seed);
+  std::default_random_engine eng(generateSeed());
   std::uniform_real_distribution<float> distr(0, 1);
   return distr(eng);
 }
@@ -338,13 +343,22 @@ float getInitialTemperature(Instance instance){
   int i = 0;
   double mayor = 0;
   while(i < 1000){
-    std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
+    std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
     bool aceptado = false;
     while(aceptado != true){
       //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
       aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
-      randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
+      randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
+      if(aceptado == false){
+        aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+      }
+      print_vector(randomTrucks);
+      //print_vector(randomTrucks);
     };
+      // std::cout << "---------------\n";
+      // std::cout << solution.totalCostActual << "\n";
+      // std::cout << solution.totalCostNeighbour << "\n";
+      // std::cout << "---------------\n";
     
     getSolutionDamages(instance, &solution);
     getSolutionCost(instance, &solution);      
@@ -360,7 +374,36 @@ float getInitialTemperature(Instance instance){
   return mayor;
 }
 
+void getArcTypeContition(Instance instance,Solution solution){
+  std::vector<int> typesCount(3,0);
+  std::vector<int> statesCount(5,0);
+  for(std::vector<int> route : solution.actual){
+    if(route.size() == 0);
 
+    std::vector<std::vector<int>> types = instance.typeMatrix;
+    std::vector<std::vector<int>> states = instance.stateMatrix;
+    int initialState = states[0][route[0]];
+    int initialType = types[0][route[0]];
+    int finalState = states[route[route.size()-1]][0];
+    int finalType = types[route[route.size()-1]][0];
+    typesCount[initialType]++;
+    typesCount[finalType]++;
+    statesCount[initialState]++;
+    statesCount[finalState]++;
+    size_t i = 1;
+    while(i < route.size()){
+        int arcState = states[route[i-1]][route[i]];
+        int arcType = types[route[i-1]][route[i]];
+        i++;
+        typesCount[arcType]++;
+        statesCount[arcState]++;
+      }
+    }
+  std::cout << "count of types: \n";
+  print_vector(typesCount);
+  std::cout << "count of states: \n";
+  print_vector(statesCount);
+}
 
 Solution simulatedAnnealing(Instance instance){
   Solution solution = greedySolution(instance);
@@ -380,14 +423,14 @@ Solution simulatedAnnealing(Instance instance){
       solution.totalCostNeighbour = solution.totalCostActual;
       solution.trucksNeighbour = solution.trucksActual;
       solution.damagesNeighbour = solution.damagesActual;
-      std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
+      std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
       bool aceptado = false;
       while(aceptado != true){
         //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
         aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
-        randomTrucks = getRandomTrucks(instance.trucks.size(), seed);
-        print_vector(randomTrucks);
-        std::cout << "camiones random \n";
+        randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
+        // print_vector(randomTrucks);
+        // std::cout << "camiones random \n";
       };
       
       getSolutionDamages(instance, &solution);
@@ -409,6 +452,7 @@ Solution simulatedAnnealing(Instance instance){
             solution.best =  solution.neighbour;
             solution.totalCostBest =  solution.totalCostNeighbour;
             std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
+            getArcTypeContition(instance,solution);
             cambiosAceptados++;
         }
       }
@@ -417,7 +461,7 @@ Solution simulatedAnnealing(Instance instance){
         //std::cout << delta << "delta \n";
         double P = std::pow(EulerConstant, -delta/To);
         //std::cout << P << "chance of acceptance \n";
-        double randomChance = getRandomChance(seed);
+        double randomChance = getRandomChance(generateSeed());
         if( P > randomChance){
           solution.actual = solution.neighbour;
           solution.totalCostActual = solution.totalCostNeighbour;
@@ -437,14 +481,39 @@ Solution simulatedAnnealing(Instance instance){
   return solution;
 }
 
-int main() {
+int main(int argc, char* argv[]) {
     //std::string filename = "../Instances/paper_colombia.txt";
-    std::string filename = "/mnt/c/Users/felip/Desktop/Tesis-IA/Tesis-IA/Instances/E-n76-k7.rvrp";
-    std::vector<int> a = {1,2,3};
-    std::vector<int> b = {4,5,6};
-    std::vector<int> c = {7,8};
-    std::vector<std::vector<int>> aux = {a,b,c};
-    aux.at(0) = c;
+    if (argc < 8) {
+      // Tell the user how to run the program
+      std::cerr << "Usage: seed" << argv[1]  <<" NAME" << std::endl;
+      std::cerr << "Usage: frost constant" << argv[2] << " NAME" << std::endl;
+      std::cerr << "Usage: End temperature" << argv[3] << " NAME" << std::endl;
+      std::cerr << "Usage: loop per temperature" << argv[4] << " NAME" << std::endl;
+      std::cerr << "Usage: max damage supported" << argv[5] << " NAME" << std::endl;
+      std::cerr << "Usage: quantity of swap moves" << argv[6] << " NAME" << std::endl;
+      std::cerr << "Usage: filename (must be full path)" << argv[7] << " NAME" << std::endl;
+
+
+      /* "Usage messages" are a conventional way of telling the user
+        * how to run a program if they enter the command incorrectly.
+        */
+      return 1;
+    }
+    //std::string filename = "/mnt/c/Users/felip/Desktop/Tesis-IA/Tesis-IA/Instances/E-n76-k7.rvrp";
+    // std::vector<int> a = {1,2,3};
+    // std::vector<int> b = {4,5,6};
+    // std::vector<int> c = {7,8};
+    // std::vector<std::vector<int>> aux = {a,b,c};
+    // aux.at(0) = c;
+    seed = std::stof(argv[1]);
+    c = std::stof(argv[2]);
+    Tend = std::stoi(argv[3]);
+    lvlLoop = std::stoi(argv[4]);
+    MAX_DAMAGE = std::stoi(argv[5]);
+    swapMoves = std::stoi(argv[6]);
+    std::string filename = argv[7];
+    //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+
 
     Instance instancia = Instance(filename);
     // Solution gred = greedySolution(instancia);
