@@ -75,6 +75,12 @@ void printSolution(std::vector<std::vector<int>> solution){
     }
 }
 
+class improvedSolution {
+  public:
+    std::vector<std::vector<int>> improvedSolution;
+    double improvedCost;
+};
+
 
 // movimiento tipo swap en que se intercambia 1 o más nodos consecutivos entre dos rutas CHEQUEADO BIEN
 bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
@@ -211,51 +217,6 @@ Solution randomSolution(Instance instancia){
     return random;
 }
 
-// obtiene el costo de una ruta. Asigna cero si la ruta esta vacia
-double getRouteCost(int truck,std::vector<int> route, Instance instance, std::vector<float> damages){
-    double cost = 0;
-    float punishCost = 0;
-    if(route.size() == 0){
-        return cost;
-    }
-    std::vector<std::vector<float>> matrix = instance.costMatrix;
-    cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
-    size_t i = 1;
-    //std::cout << instance.costMatrix[0][route[0]];
-    while(i < route.size()){
-        //std::cout << cost << " cost\n";
-        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
-        cost = cost + (instance.costMatrix)[route[i-1]][route[i]];
-        i++; 
-    }
-    punishCost = damages[truck] > MAX_DAMAGE ? damages[truck] - MAX_DAMAGE: 0;
-    //std::cout << punishCost << "punish cost\n";
-    cost = cost * (1 + punishCost); 
-    return cost;
-}
-
-// calcula el costo de la solución
-void getSolutionCost(Instance instance, Solution* solution){
-    double cost = 0;
-    int i = 0;
-    for(std::vector<int> route: solution->actual){
-        cost = 0;
-        cost = getRouteCost(i,route, instance, solution->damagesActual);
-        solution->costsActual[i] = cost;
-        solution->totalCostActual = solution->totalCostActual + cost; 
-        i++;
-    }
-    i = 0;
-    for(std::vector<int> route: solution->neighbour){
-        cost = 0;
-        cost = getRouteCost(i,route, instance, solution->damagesNeighbour);
-        solution->costsNeighbour[i] = cost;
-        //std::cout << cost << "costo \n";
-        solution->totalCostNeighbour = solution->totalCostNeighbour + cost; 
-        i++;
-    }
-}
-
 // calcula el daño de una ruta
 float getRouteDamage(std::vector<int> route, Instance instance){
     float dmg = 0;
@@ -282,6 +243,52 @@ float getRouteDamage(std::vector<int> route, Instance instance){
     return dmg;
 }
 
+// obtiene el costo de una ruta. Asigna cero si la ruta esta vacia
+double getRouteCost(std::vector<int> route, Instance instance){
+    double cost = 0;
+    float punishCost = 0;
+    if(route.size() == 0){
+        return cost;
+    }
+    std::vector<std::vector<float>> matrix = instance.costMatrix;
+    cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
+    size_t i = 1;
+    //std::cout << instance.costMatrix[0][route[0]];
+    while(i < route.size()){
+        //std::cout << cost << " cost\n";
+        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
+        cost = cost + (instance.costMatrix)[route[i-1]][route[i]];
+        i++; 
+    }
+    float dmg = getRouteDamage(route, instance);
+    punishCost = dmg > MAX_DAMAGE ? dmg - MAX_DAMAGE: 0;
+    //std::cout << punishCost << "punish cost\n";
+    cost = cost * (1 + punishCost); 
+    return cost;
+}
+
+// calcula el costo de la solución
+void getSolutionCost(Instance instance, Solution* solution){
+    double cost = 0;
+    int i = 0;
+    for(std::vector<int> route: solution->actual){
+        cost = 0;
+        cost = getRouteCost(route, instance);
+        solution->costsActual[i] = cost;
+        solution->totalCostActual = solution->totalCostActual + cost; 
+        i++;
+    }
+    i = 0;
+    for(std::vector<int> route: solution->neighbour){
+        cost = 0;
+        cost = getRouteCost(route, instance);
+        solution->costsNeighbour[i] = cost;
+        //std::cout << cost << "costo \n";
+        solution->totalCostNeighbour = solution->totalCostNeighbour + cost; 
+        i++;
+    }
+}
+
 // float getSolutionFuntionObjective(std::vector<std::vector<int>> solution){
     
 // }
@@ -306,17 +313,47 @@ void getSolutionDamages(Instance instance, Solution* solution){
     }
 }
 
-// verifica que no se rompa la restriccion de peso
-// bool verifyCapacityRestriction(std::vector<std::vector<int>> solution, Instance instance){
-//     float damage = 0;
-//     for(Truck truck: instance.trucks){
-//         if (truck.availableCapacity < 0){
-//             return false;
-//         }
-//     }
-//     return true; 
-// }
+std::vector<int> twoOptSwap(std::vector<int> route, int i, int k){
+  std::vector<int> newRoute;
+  for(int j = 0; j < i; j++){
+    newRoute.push_back(route[j]);
+  }
 
+  for(int j = k ; j >= i; j--){
+    newRoute.push_back(route[j]);
+  }
+
+  for(size_t j = k + 1  ; j < route.size(); j++){
+    newRoute.push_back(route[j]);
+  }
+   return newRoute;
+}
+
+std::vector<std::vector<int>> twoOptOptimizationBest(Solution solution, Instance instance){
+  int truck = 0;
+  std::vector<std::vector<int>> improvedSolution;
+  for(std::vector<int> route : solution.best){
+    int bestCost = getRouteCost(route, instance);
+    std::vector<int> bestNeighbourRoute(route);
+    std::vector<int> initialRoute(route);
+    for(size_t i = 0; i < route.size() - 1;i++){
+      std::vector<int> improvedRoute;
+      for(size_t k = i +1; k < route.size(); k++){
+        improvedRoute = twoOptSwap(initialRoute, i, k);
+        double improvedCost = getRouteCost(improvedRoute, instance);
+        if(improvedCost < bestCost){
+          bestCost = improvedCost;
+          bestNeighbourRoute = improvedRoute;
+        }
+      }
+    }
+    truck++;
+    improvedSolution.push_back(bestNeighbourRoute);
+  }
+  std::cout << "wea mjorada";
+  printSolution(improvedSolution);
+  return improvedSolution;
+}
 
 std::vector<int> getRandomTrucks(int trucks, unsigned seed){
   std::vector<int> v(trucks);
@@ -448,9 +485,17 @@ Solution simulatedAnnealing(Instance instance){
         // std::cout << solution.totalCostBest << "mejor \n";
         // std::cout << "---------------\n";
         if(solution.totalCostNeighbour < solution.totalCostBest){
+            std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
+            //printSolution(bestImproved);
+            Solution solutionAux(bestImproved);
+            getSolutionDamages(instance, &solutionAux);
+            getSolutionCost(instance, &solutionAux);
+            std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
+            std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
+            std::cout << "solucion improved\n";
+            printSolution(bestImproved);
             solution.best =  solution.neighbour;
             solution.totalCostBest =  solution.totalCostNeighbour;
-            std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
             getArcTypeContition(instance,solution);
             cambiosAceptados++;
         }
@@ -520,8 +565,10 @@ int main(int argc, char* argv[]) {
     // std::cout << "antes\n";
     // printSolution(gred.actual);
     // insertMove(instancia,&gred,3,4);
-    //     std::cout << "despues\n";
-
+    //     std::cout << "despues\n"
+    //printSolution(twoOptOptimizationBest(solution,instancia));
+    //std::cout << 'mejor solucion';
+    //printSolution(solution.best);
     // printSolution(gred.actual);
     printSolution(simulatedAnnealing(instancia).best);
     //std::cout << getInitialTemperature(instancia);

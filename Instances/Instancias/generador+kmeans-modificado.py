@@ -250,7 +250,7 @@ def main():
         i = i+1
         
     #Calculo de costos.
-    Precio = 2.82 #Precio de un galon de gasolina
+    Precio = 2.82 #Precio de un galon de gasolina en USD
     costos = [[0 for x in range(0,nnodos)] for y in range(0,nnodos)]
     costosVariables = [[0 for x in range(0,nnodos)] for y in range(0,nnodos)]
     costosFijos = [[0 for x in range(0,nnodos)] for y in range(0,nnodos)]
