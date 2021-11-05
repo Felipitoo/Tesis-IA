@@ -463,7 +463,10 @@ Solution simulatedAnnealing(Instance instance){
       bool aceptado = false;
       while(aceptado != true){
         //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
-        aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+        aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+        if(aceptado == false){
+          aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+        }
         randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
         // print_vector(randomTrucks);
         // std::cout << "camiones random \n";
@@ -485,17 +488,18 @@ Solution simulatedAnnealing(Instance instance){
         // std::cout << solution.totalCostBest << "mejor \n";
         // std::cout << "---------------\n";
         if(solution.totalCostNeighbour < solution.totalCostBest){
+            solution.best =  solution.neighbour;
             std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
             //printSolution(bestImproved);
             Solution solutionAux(bestImproved);
             getSolutionDamages(instance, &solutionAux);
             getSolutionCost(instance, &solutionAux);
-            std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
-            std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
-            std::cout << "solucion improved\n";
-            printSolution(bestImproved);
-            solution.best =  solution.neighbour;
-            solution.totalCostBest =  solution.totalCostNeighbour;
+            // std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
+            // std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
+            // std::cout << "solucion improved\n";
+            //printSolution(bestImproved);
+            solution.best =  bestImproved;
+            solution.totalCostBest =  solutionAux.totalCostNeighbour;
             getArcTypeContition(instance,solution);
             cambiosAceptados++;
         }
