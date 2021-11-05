@@ -15,13 +15,19 @@ float MAX_DAMAGE = 2;
 int swapMoves = 2;
 const double EulerConstant = std::exp(1.0);
 //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
+size_t firstSeed = -1;
 size_t seed = 21;
 float c = 0.95;
 float Tend = 1;
 int lvlLoop = 100;
 
 size_t generateSeed(){
-  seed = seed + 1;
+  if (firstSeed == -1){
+    seed = std::chrono::system_clock::now().time_since_epoch().count();
+    //std::cout << seed << "seed \n";
+    return seed;
+  }
+  seed = seed + 2;
   //std::cout << seed << "\n";
   return seed;
 }
@@ -505,6 +511,7 @@ int main(int argc, char* argv[]) {
     // std::vector<std::vector<int>> aux = {a,b,c};
     // aux.at(0) = c;
     seed = std::stof(argv[1]);
+    firstSeed = seed;
     c = std::stof(argv[2]);
     Tend = std::stoi(argv[3]);
     lvlLoop = std::stoi(argv[4]);
