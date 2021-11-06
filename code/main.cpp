@@ -410,12 +410,12 @@ float getInitialTemperature(Instance instance){
   return mayor;
 }
 
-void getArcTypeContition(Instance instance,Solution solution, std::string type){
+void getArcTypeContition(Instance instance,Solution solution, int type){
   std::vector<int> typesCount(3,0);
   std::vector<int> statesCount(5,0);
   std::vector<std::vector<int>> choosen;
-  choosen = type == "best" ? solution.best : solution.actual;
-  for(std::vector<int> route : solution.best){
+  choosen = type == 0 ? solution.best : solution.actual;
+  for(std::vector<int> route : choosen){
     if(route.size() == 0);
 
     std::vector<std::vector<int>> types = instance.typeMatrix;
@@ -437,11 +437,26 @@ void getArcTypeContition(Instance instance,Solution solution, std::string type){
         statesCount[arcState]++;
       }
     }
-  std::cout << type << "\n";
+  std::string toPrint = type == 0 ? "best" : "actual"; 
+  std::cout << toPrint << "\n";
   std::cout << "count of types: \n";
   print_vector(typesCount);
   std::cout << "count of states: \n";
   print_vector(statesCount);
+}
+
+float getProbability(double total, double part){
+  if (total == 0){
+    return 0.5;
+  }
+  return 0.15 + 0.7 * (total/part);
+}
+
+float throwCoin(){
+  std::mt19937 engine{generateSeed()};
+  // initialize a uniform distribution between 0 and 1
+  std::uniform_real_distribution<double> unif(0, 1);
+  return unif(engine);
 }
 
 Solution simulatedAnnealing(Instance instance){
@@ -451,12 +466,17 @@ Solution simulatedAnnealing(Instance instance){
   getSolutionCost(instance, &solution);
   solution.best = solution.actual;
   solution.totalCostBest = solution.totalCostActual;
-
+  int totalSwaps = 0;
+  int totalInserts = 0;
   int cambiosAceptados = 0;
   int peoresAceptadas = 0;
   float To = getInitialTemperature(instance);
   while(To > Tend){
     To = To * c;
+    double swapsAccepted = 0;
+    double insertsAccepted = 0;
+    double accepted = 0;
+    bool acceptedSwap = true;
     for(int i=0; i < lvlLoop; i++){
       solution.neighbour = solution.actual;
       solution.totalCostNeighbour = solution.totalCostActual;
@@ -466,9 +486,15 @@ Solution simulatedAnnealing(Instance instance){
       bool aceptado = false;
       while(aceptado != true){
         //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
-        aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
-        if(aceptado == false){
+        float pInsert = getProbability(accepted, insertsAccepted);
+        float coin = throwCoin();
+        acceptedSwap = false;
+        if(coin <= pInsert){
           aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+        }
+        else{
+          aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+          acceptedSwap = true;
         }
         randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
         // print_vector(randomTrucks);
@@ -482,6 +508,8 @@ Solution simulatedAnnealing(Instance instance){
       // std::cout << solution.totalCostNeighbour << "\n";
       // std::cout << "---------------\n";
       if (solution.totalCostNeighbour < solution.totalCostActual){
+        accepted++;
+        acceptedSwap == true ? swapsAccepted++ : insertsAccepted++;
         solution.actual = solution.neighbour;
         solution.totalCostActual = solution.totalCostNeighbour;
         solution.trucksActual = solution.trucksNeighbour;
@@ -497,14 +525,14 @@ Solution simulatedAnnealing(Instance instance){
             Solution solutionAux(bestImproved);
             getSolutionDamages(instance, &solutionAux);
             getSolutionCost(instance, &solutionAux);
-            // std::cout << "la mejor solución tiene coste " << solution.totalCostBest << "\n";
-            // std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
+            std::cout << "la mejor solución tiene coste " << solution.totalCostActual << "\n";
+            std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
             // std::cout << "solucion improved\n";
             //printSolution(bestImproved);
             solution.best =  bestImproved;
             solution.totalCostBest =  solutionAux.totalCostNeighbour;
-            getArcTypeContition(instance,solution, "best");
-            getArcTypeContition(instance,solution, "actual");
+            getArcTypeContition(instance,solution, 0);
+            getArcTypeContition(instance,solution, 1);
             cambiosAceptados++;
         }
       }
@@ -515,6 +543,8 @@ Solution simulatedAnnealing(Instance instance){
         //std::cout << P << "chance of acceptance \n";
         double randomChance = getRandomChance(generateSeed());
         if( P > randomChance){
+          accepted++;
+          acceptedSwap == true ? swapsAccepted++ : insertsAccepted++;
           solution.actual = solution.neighbour;
           solution.totalCostActual = solution.totalCostNeighbour;
           solution.trucksActual = solution.trucksNeighbour;
@@ -526,8 +556,13 @@ Solution simulatedAnnealing(Instance instance){
       solution.totalCostNeighbour = 0;
       //solution.totalCostBest = 0;
     }
+    totalInserts+= insertsAccepted;
+    totalSwaps+= swapsAccepted;
+    //std::cout << accepted << "Accepted\n";
 
   }
+  std::cout << totalSwaps << "totalSwaps\n";
+  std::cout << totalInserts << "totalInserts\n";
   std::cout << cambiosAceptados << "cambios aceptados\n";
   std::cout << peoresAceptadas << "peores aceptados\n";
   return solution;
