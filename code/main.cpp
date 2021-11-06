@@ -410,10 +410,12 @@ float getInitialTemperature(Instance instance){
   return mayor;
 }
 
-void getArcTypeContition(Instance instance,Solution solution){
+void getArcTypeContition(Instance instance,Solution solution, std::string type){
   std::vector<int> typesCount(3,0);
   std::vector<int> statesCount(5,0);
-  for(std::vector<int> route : solution.actual){
+  std::vector<std::vector<int>> choosen;
+  choosen = type == "best" ? solution.best : solution.actual;
+  for(std::vector<int> route : solution.best){
     if(route.size() == 0);
 
     std::vector<std::vector<int>> types = instance.typeMatrix;
@@ -435,6 +437,7 @@ void getArcTypeContition(Instance instance,Solution solution){
         statesCount[arcState]++;
       }
     }
+  std::cout << type << "\n";
   std::cout << "count of types: \n";
   print_vector(typesCount);
   std::cout << "count of states: \n";
@@ -500,7 +503,8 @@ Solution simulatedAnnealing(Instance instance){
             //printSolution(bestImproved);
             solution.best =  bestImproved;
             solution.totalCostBest =  solutionAux.totalCostNeighbour;
-            getArcTypeContition(instance,solution);
+            getArcTypeContition(instance,solution, "best");
+            getArcTypeContition(instance,solution, "actual");
             cambiosAceptados++;
         }
       }
