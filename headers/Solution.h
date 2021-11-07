@@ -17,6 +17,7 @@ public:
     std::vector<std::vector<int>> best;
     std::vector<Truck> trucksActual;
     std::vector<Truck> trucksNeighbour;
+    std::vector<Truck> trucksBest;
 
 public:
     Solution(std::vector<std::vector<int>> solution);
