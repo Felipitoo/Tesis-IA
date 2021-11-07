@@ -26,16 +26,21 @@ size_t generateSeed(){
   return seed;
 }
 
-// funcion que printea los camiones
-void printTruck(std::vector<Truck> camiones){
-  for(Truck camion: camiones){
-    std::cout << camion.availableCapacity << "\n";
-  }
-}
+// // funcion que printea los camiones
+// void printTruck(std::vector<Truck> camiones){
+//   for(Truck camion: camiones){
+//     std::cout << camion.availableCapacity << "\n";
+//   }
+// }
 
-void printTruckCapacity(std::vector<Truck> camiones){
+void printTrucks(std::vector<Truck> camiones){
+  int i = 0;
   for(Truck camion: camiones){
-    std::cout << camion.totalCapacity << "\n";
+    std::cout << "Camion " << i << "\n"; 
+    std::cout << camion.totalCapacity << "Capacidad Total \n";
+    std::cout << camion.availableCapacity << "Disponible \n";
+    std::cout << camion.totalCapacity - camion.availableCapacity << "Recolectado \n";  
+    i++;
   }
 }
 
@@ -98,22 +103,26 @@ bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
     size_t jInicial = j;
     std::vector<int> initialRoute1(route1);
     std::vector<int> initialRoute2(route2);
-    solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
-    //std::vector<Truck> initialActualTrucks(solution->trucksActual);
+    // solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
+    std::vector<Truck> aux(solution->trucksActual);
     while(i < route1.size() && j < route2.size() && (i < iInicial + swapMoves) && (j < jInicial + swapMoves)){ // while verifica que el i/j no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
-        solution->trucksNeighbour[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        solution->trucksNeighbour[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        aux[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+        aux[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
         std::iter_swap(route1.begin() + i, route2.begin() + j);
-        solution->trucksNeighbour[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
-        solution->trucksNeighbour[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        aux[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+        aux[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
         i = i + 1 ;
         j = j + 1 ;
     }
-    if((solution->trucksNeighbour[camion1].availableCapacity < 0) || (solution->trucksNeighbour[camion2].availableCapacity < 0)){
+    if((aux[camion1].availableCapacity < 0) || (aux[camion2].availableCapacity < 0)){
+        solution->trucksNeighbour.clear();
+        solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
         return false;
     }
     //print_vector(route1);
     //print_vector(route2);
+    solution->trucksNeighbour.clear();
+    solution->trucksNeighbour = aux;
     solution->neighbour.at(camion1) = route1;
     solution->neighbour.at(camion2) = route2;
     return true;
@@ -124,7 +133,7 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
     //std::cout << "camion 1 " << camion1 << "camion 2 " << camion2 << "\n"; 
     std::vector<int> route1(solution->neighbour[camion1]); 
     std::vector<int> route2(solution->neighbour[camion2]);
-    std::vector<int> aux;
+    //std::vector<int> aux;
     if(route1.size() < 1) return false;
     //std::random_device random_device;
     std::mt19937 engine{generateSeed()};
@@ -139,22 +148,28 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
     int seleccionado = dist(engine);
     int dondeInsertar = dist2(engine);
     int nodoAInsertar = route1[seleccionado];
+    std::vector<Truck> aux(solution->trucksActual);
     solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
     //std::vector<Truck> initialTrucks(solution->trucks);
     route2.insert(route2.begin() + dondeInsertar, nodoAInsertar);
-    solution->trucksNeighbour[camion2].availableCapacity-= instance.nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+    // solution->trucksNeighbour[camion2].availableCapacity-= instance.nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+    aux[camion2].availableCapacity-= instance.nodes[nodoAInsertar].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
     // std::cout << "ruta 1 : ";
     // print_vector(route1);
     // std::cout << "ruta 2 : ";
     // print_vector(route2);
     // std::cout << "seleccionado " << seleccionado << " route 1 size :" << route1.size() << " dondeInsertar " << dondeInsertar << "\n"; 
     route1.erase(route1.begin() + seleccionado);
-    solution->trucksNeighbour[camion1].availableCapacity+= instance.nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-    if(solution->trucksNeighbour[camion2].availableCapacity < 0){
+    aux[camion1].availableCapacity+= instance.nodes[nodoAInsertar].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+    if(aux[camion2].availableCapacity < 0){
         //solution->trucks = initialTrucks;
+        solution->trucksNeighbour.clear();
+        solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
         return false;
     }
     // print_vector(aux);
+    solution->trucksNeighbour.clear();
+    solution->trucksNeighbour = aux;
     solution->neighbour.at(camion1) = route1;
     solution->neighbour.at(camion2) = route2;
     return true;
@@ -184,7 +199,9 @@ Solution greedySolution(Instance instancia){
     Solution greedy = Solution(greedySolution);
     greedy.trucksActual = trucks;
     greedy.trucksNeighbour = trucks;
-
+    // std::cout << "Greedy\n";
+    // printSolution(greedy.actual);
+    // printTrucks(trucks);
     return greedy;
 }
 
@@ -350,8 +367,8 @@ std::vector<std::vector<int>> twoOptOptimizationBest(Solution solution, Instance
     truck++;
     improvedSolution.push_back(bestNeighbourRoute);
   }
-  std::cout << "wea mjorada";
-  printSolution(improvedSolution);
+  // std::cout << " mjorada";
+  // printSolution(improvedSolution);
   return improvedSolution;
 }
 
@@ -437,12 +454,12 @@ void getArcTypeContition(Instance instance,Solution solution, int type){
         statesCount[arcState]++;
       }
     }
-  std::string toPrint = type == 0 ? "best" : "actual"; 
-  std::cout << toPrint << "\n";
-  std::cout << "count of types: \n";
-  print_vector(typesCount);
-  std::cout << "count of states: \n";
-  print_vector(statesCount);
+  // std::string toPrint = type == 0 ? "best" : "actual"; 
+  // std::cout << toPrint << "\n";
+  // std::cout << "count of types: \n";
+  // print_vector(typesCount);
+  // std::cout << "count of states: \n";
+  // print_vector(statesCount);
 }
 
 float getProbability(double total, double part){
@@ -531,6 +548,10 @@ Solution simulatedAnnealing(Instance instance){
             //printSolution(bestImproved);
             solution.best =  bestImproved;
             solution.totalCostBest =  solutionAux.totalCostNeighbour;
+            solution.trucksBest.clear();
+            solution.trucksBest = solution.trucksNeighbour;
+            // printSolution(solution.neighbour);
+            // printTrucks(solution.trucksNeighbour);
             getArcTypeContition(instance,solution, 0);
             getArcTypeContition(instance,solution, 1);
             cambiosAceptados++;
@@ -613,7 +634,9 @@ int main(int argc, char* argv[]) {
     //std::cout << 'mejor solucion';
     //printSolution(solution.best);
     // printSolution(gred.actual);
-    printSolution(simulatedAnnealing(instancia).best);
+    Solution test = simulatedAnnealing(instancia); 
+    printSolution(test.best);
+    printTrucks(test.trucksBest);
     //std::cout << getInitialTemperature(instancia);
 
 
