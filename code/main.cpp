@@ -182,6 +182,7 @@ Solution greedySolution(Instance instancia){
     instancia.shuffleReferenceListNodes(generateSeed());
     //printNodes(instancia->nodes);
     std::vector<Truck> trucks = instancia.trucks;
+    instancia.sortTrucks();
     std::vector<std::vector<int>> greedySolution(trucks.size());
     for(int referencia : instancia.referenceListNodes) {
         bool assigned = false;
