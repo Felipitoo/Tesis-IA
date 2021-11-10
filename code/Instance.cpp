@@ -209,7 +209,7 @@ Instance::Instance(std::string filename){
 void Instance::sortTrucks(){
   std::sort(this->trucks.begin(), this->trucks.end(),
       [](Truck & a, Truck & b) -> bool
-      { return a.totalCapacity < b.totalCapacity; } );
+      { return a.totalCapacity > b.totalCapacity; } );
 }
 
 void Instance::shuffleReferenceListNodes(unsigned seed){
