@@ -244,17 +244,18 @@ float getRouteDamage(std::vector<int> route, Instance instance){
     std::vector<std::vector<float>> damages = instance.damages;
     std::vector<std::vector<int>> types = instance.typeMatrix;
     std::vector<std::vector<int>> states = instance.stateMatrix;
+    std::vector<std::vector<int>> distances = instance.distanceMatrix;
     int initialState = states[0][route[0]];
     int initialType = types[0][route[0]];
     int finalState = states[route[route.size()-1]][0];
     int finalType = types[route[route.size()-1]][0];
 
-    dmg = damages[initialState][initialType] + damages[finalState][finalType];
+    dmg = (damages[initialState][initialType] * distances[0][route[0]]) + (damages[finalState][finalType] * distances[route[route.size()-1]][0]);
     size_t i = 1;
     while(i < route.size()){
         int arcState = states[route[i-1]][route[i]];
         int arcType = types[route[i-1]][route[i]];
-        dmg = dmg + damages[arcState][arcType];
+        dmg = dmg + (damages[arcState][arcType] * distances[route[i-1]][route[i]]);
         i++; 
     }
     // std::cout << dmg << "damges\n";
@@ -467,7 +468,7 @@ float getProbability(double total, double part){
   if (total == 0){
     return 0.5;
   }
-  return 0.15 + 0.7 * (total/part);
+  return 0.15 + 0.7 * (part/total);
 }
 
 float throwCoin(){

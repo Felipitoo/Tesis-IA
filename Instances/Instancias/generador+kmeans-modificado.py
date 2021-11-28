@@ -130,12 +130,12 @@ def main():
             sys.exit("It is not possible to perform clustering in this case.")
         i = 1
         while (i < nnodos):
-            distancia[i][i] = 0
+            distancia[i][i] = int(0)
             values = fin.readline().split() 
             j = 0
             while (j < i): 
-                distancia[i][j] = values[j]
-                distancia[j][i] = distancia[i][j]
+                distancia[i][j] = int(values[j])
+                distancia[j][i] = int(distancia[i][j])
                 j = j+1
             i = i+1
     
@@ -276,6 +276,7 @@ def main():
                 Fij = 0.001 #Via intransitable
 
             velocidad = 0
+            #print(distancia[i][j])
             if (tipoArcos[i][j] == 0) : #Plano
                 velocidad = VTP*Fij
                 ICH = VTP/RKP #Consumo por hora segun tipo de arco
@@ -306,11 +307,11 @@ def main():
             CVij /= capacidad
             
             ##Escribir la matriz superior de GAMS pasando a peso colobiano.
-            costosVariables[i][j] *= 3743 #Peso colombiano al 12.10.21 
+            #costosVariables[i][j] *= 3743 #Peso colombiano al 12.10.21 
             costosVariables[j][i] = costosVariables[i][j]
             
             ##Escribir la matriz inferior de GAMS pasando a peso colobiano.
-            costosFijos[i][j] = ((1.05*( CVij + CF))/(1 - 0.133)) * capacidad * 3743 #Peso colombiano al 12.10.21 
+            costosFijos[i][j] = ((1.05*( CVij + CF))/(1 - 0.133)) * capacidad #* 3743 #Peso colombiano al 12.10.21 
             costosFijos[j][i] = costosFijos[i][j]
             costos[i][j] = round(costosVariables[i][j]) + round(costosFijos[i][j]) 
             costos[j][i] = costos[i][j]
@@ -404,7 +405,7 @@ def main():
     ###escritura del archivo de instancia GAMS.
     fout2=open(sys.argv[2]+".GAMS", 'w')
     fout2.write("SET\n")
-    fout2.write("I NODO TIPO I /I0*I" + str(nnodos-1) + "/;\n") #TODO: Lleva punto y coma?
+    fout2.write("I NODO TIPO I /I0*I" + str(nnodos-1) + "/\n")
     fout2.write("K TIPO DE VEHICULO K /K1*K" + str(ncamiones) + "/;\n")
     fout2.write("ALIAS (I,J,F);\n")
     
@@ -481,7 +482,7 @@ def main():
     
     fout2.write("\n;\n")
     
-    fout2.write("VARIABLES")
+    fout2.write("VARIABLES\n")
     fout2.write("Z\t COSTO TOTAL DE TRANSPORTE\n")
     fout2.write("X(I,J,K)\t 1 SI SE ASIGNA EL VEHICULO K PARA VIAJAR DESDE EL NODO I AL NODO J\n")
     fout2.write("Y(J,K)\t 1 SE SE ASIGNA EL NODO I PARA SER ATENDIDO POR EL VEHICULO K\n")
