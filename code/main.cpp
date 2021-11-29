@@ -290,6 +290,8 @@ double getRouteCost(std::vector<int> route, Instance instance){
 void getSolutionCost(Instance instance, Solution* solution){
     double cost = 0;
     int i = 0;
+    solution->totalCostActual = 0; 
+    solution->totalCostNeighbour = 0; 
     for(std::vector<int> route: solution->actual){
         cost = 0;
         cost = getRouteCost(route, instance);
@@ -478,13 +480,14 @@ float throwCoin(){
   return unif(engine);
 }
 
-Solution simulatedAnnealing(Instance instance){
-  Solution solution = greedySolution(instance);
+Solution simulatedAnnealing(Instance instance, Solution initialSolution){
+  Solution solution = initialSolution;
   printSolution(solution.actual);
   getSolutionDamages(instance, &solution);
   getSolutionCost(instance, &solution);
   solution.best = solution.actual;
   solution.totalCostBest = solution.totalCostActual;
+  std::cout << solution.totalCostActual << "mejor costo inicial";
   int totalSwaps = 0;
   int totalInserts = 0;
   int cambiosAceptados = 0;
@@ -539,19 +542,21 @@ Solution simulatedAnnealing(Instance instance){
         // std::cout << "---------------\n";
         if(solution.totalCostNeighbour < solution.totalCostBest){
             solution.best =  solution.neighbour;
-            std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
-            //printSolution(bestImproved);
-            Solution solutionAux(bestImproved);
-            getSolutionDamages(instance, &solutionAux);
-            getSolutionCost(instance, &solutionAux);
-            std::cout << "la mejor solución tiene coste " << solution.totalCostActual << "\n";
-            std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
-            // std::cout << "solucion improved\n";
-            //printSolution(bestImproved);
-            solution.best =  bestImproved;
-            solution.totalCostBest =  solutionAux.totalCostNeighbour;
-            solution.trucksBest.clear();
+            solution.totalCostBest =  solution.totalCostNeighbour;
             solution.trucksBest = solution.trucksNeighbour;
+            // // std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
+            // // //printSolution(bestImproved);
+            // // Solution solutionAux(bestImproved);
+            // // getSolutionDamages(instance, &solutionAux);
+            // // getSolutionCost(instance, &solutionAux);
+            std::cout << "la mejor solución tiene coste " << solution.totalCostActual << "\n";
+            // std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
+            // // std::cout << "solucion improved\n";
+            // //printSolution(bestImproved);
+            // solution.best =  bestImproved;
+            // solution.totalCostBest =  solutionAux.totalCostNeighbour;
+            // solution.trucksBest.clear();
+            // solution.trucksBest = solution.trucksNeighbour;
             // printSolution(solution.neighbour);
             // printTrucks(solution.trucksNeighbour);
             getArcTypeContition(instance,solution, 0);
@@ -575,8 +580,6 @@ Solution simulatedAnnealing(Instance instance){
           peoresAceptadas++;
         }
       }
-      solution.totalCostActual = 0;
-      solution.totalCostNeighbour = 0;
       //solution.totalCostBest = 0;
     }
     totalInserts+= insertsAccepted;
@@ -584,10 +587,23 @@ Solution simulatedAnnealing(Instance instance){
     //std::cout << accepted << "Accepted\n";
 
   }
+  std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
+  Solution solutionAux(bestImproved);
+  getSolutionDamages(instance, &solutionAux);
+  getSolutionCost(instance, &solutionAux);
+  // std::cout << "solucion improved\n";
+  //printSolution(bestImproved);
+  solution.best =  bestImproved;
+  solution.totalCostBest =  solutionAux.totalCostActual;
+  std::cout << solution.totalCostBest << "solucion improved cost\n";
+  //printSolution(bestImproved);
   std::cout << totalSwaps << "totalSwaps\n";
   std::cout << totalInserts << "totalInserts\n";
   std::cout << cambiosAceptados << "cambios aceptados\n";
   std::cout << peoresAceptadas << "peores aceptados\n";
+  solution.actual = solution.best;
+  solution.totalCostActual = solution.totalCostBest;
+  solution.trucksActual = solution.trucksBest;
   return solution;
 }
 
@@ -617,7 +633,7 @@ int main(int argc, char* argv[]) {
     // aux.at(0) = c;
     seed = std::stof(argv[1]);
     c = std::stof(argv[2]);
-    Tend = std::stoi(argv[3]);
+    Tend = std::stof(argv[3]);
     lvlLoop = std::stoi(argv[4]);
     MAX_DAMAGE = std::stoi(argv[5]);
     swapMoves = std::stoi(argv[6]);
@@ -636,9 +652,11 @@ int main(int argc, char* argv[]) {
     //std::cout << 'mejor solucion';
     //printSolution(solution.best);
     // printSolution(gred.actual);
-    Solution test = simulatedAnnealing(instancia); 
-    printSolution(test.best);
-    printTrucks(test.trucksBest);
+    Solution greedy = greedySolution(instancia);
+    Solution test = simulatedAnnealing(instancia, greedy); 
+    Solution final = simulatedAnnealing(instancia, test);
+    printSolution(final.best);
+    printTrucks(final.trucksBest);
     //std::cout << getInitialTemperature(instancia);
 
 
