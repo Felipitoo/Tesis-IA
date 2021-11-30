@@ -15,7 +15,7 @@ float MAX_DAMAGE = 2;
 int swapMoves = 2;
 const double EulerConstant = std::exp(1.0);
 //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-size_t seed = 21;
+double seed = 21;
 float c = 0.95;
 float Tend = 1;
 int lvlLoop = 100;
@@ -394,13 +394,14 @@ float getRandomChance(unsigned seed){
   return distr(eng);
 }
 
-float getInitialTemperature(Instance instance){
-  Solution solution = randomSolution(instance);
+double getInitialTemperature(Instance instance){
+  Solution solution = greedySolution(instance);
   getSolutionDamages(instance, &solution);
   getSolutionCost(instance, &solution);
   int i = 0;
   double mayor = 0;
   while(i < 1000){
+    //std::cout << "getting initial temperature";
     std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
     bool aceptado = false;
     while(aceptado != true){
@@ -481,7 +482,7 @@ float throwCoin(){
 }
 
 Solution simulatedAnnealing(Instance instance, Solution initialSolution){
-  Solution solution = initialSolution;
+  Solution solution(initialSolution);
   printSolution(solution.actual);
   getSolutionDamages(instance, &solution);
   getSolutionCost(instance, &solution);
@@ -492,7 +493,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution){
   int totalInserts = 0;
   int cambiosAceptados = 0;
   int peoresAceptadas = 0;
-  float To = getInitialTemperature(instance);
+  double To = getInitialTemperature(instance);
   while(To > Tend){
     To = To * c;
     double swapsAccepted = 0;
@@ -631,7 +632,7 @@ int main(int argc, char* argv[]) {
     // std::vector<int> c = {7,8};
     // std::vector<std::vector<int>> aux = {a,b,c};
     // aux.at(0) = c;
-    seed = std::stof(argv[1]);
+    seed = std::stod(argv[1]);
     c = std::stof(argv[2]);
     Tend = std::stof(argv[3]);
     lvlLoop = std::stoi(argv[4]);
