@@ -643,6 +643,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   //printSolution(bestImproved);
   std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
+  dataFile << "--------------------------\n";
   dataFile << double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den << " tiempo en segundos\n";
   dataFile << solution.totalCostBest << " Mejor costo encontrado\n";
   writeSolution(solution.best);
@@ -651,6 +652,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   dataFile << totalInserts << " totalInserts\n";
   dataFile << cambiosAceptados << " cambios aceptados\n";
   dataFile << peoresAceptadas << " peores aceptados\n";
+  dataFile << "--------------------------\n";
   solution.actual = solution.best;
   solution.totalCostActual = solution.totalCostBest;
   solution.trucksActual = solution.trucksBest;
