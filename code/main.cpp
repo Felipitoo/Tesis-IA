@@ -5,6 +5,7 @@
 #include <chrono>
 #include <random>
 #include <cmath>
+#include <fstream>
 #include <math.h>
 #include "../headers/Instance.h"
 #include "../headers/Solution.h"
@@ -19,6 +20,7 @@ double seed = 21;
 float c = 0.95;
 float Tend = 1;
 int lvlLoop = 100;
+std::ofstream dataFile;
 
 size_t generateSeed(){
   seed = seed + 1;
@@ -44,6 +46,17 @@ void printTrucks(std::vector<Truck> camiones){
   }
 }
 
+void writeTrucks(std::vector<Truck> camiones){
+  int i = 0;
+  for(Truck camion: camiones){
+    dataFile << "Camion " << i << "\n"; 
+    dataFile << camion.totalCapacity << "Capacidad Total \n";
+    dataFile << camion.availableCapacity << "Disponible \n";
+    dataFile << camion.totalCapacity - camion.availableCapacity << "Recolectado \n";  
+    i++;
+  }
+}
+
 // funcion que printea los nodos
 void printNodes(std::vector<Node> nodes){
     std::cout << "-------------\n";
@@ -62,6 +75,13 @@ void print_vector(std::vector<T> vect){
     std::cout << "\n";
 }
 
+void writeVector(std::vector<int> vect){
+    for(size_t i = 0 ; i < vect.size(); i++){
+        dataFile << vect[i] << " ";
+    }
+    dataFile << "\n";
+}
+
 // funcion template para printear un vector de vectores (una matriz)
 template<typename T>
 void print_matrix(std::vector<std::vector<T>> matrix){
@@ -77,6 +97,12 @@ void print_matrix(std::vector<std::vector<T>> matrix){
 void printSolution(std::vector<std::vector<int>> solution){
     for(std::vector<int> vec: solution){
         print_vector(vec);
+    }
+}
+
+void writeSolution(std::vector<std::vector<int>> solution){
+    for(std::vector<int> vec: solution){
+        writeVector(vec);
     }
 }
 
@@ -401,7 +427,6 @@ double getInitialTemperature(Instance instance){
   int i = 0;
   double mayor = 0;
   while(i < 1000){
-    //std::cout << "getting initial temperature";
     std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
     bool aceptado = false;
     while(aceptado != true){
@@ -481,7 +506,7 @@ float throwCoin(){
   return unif(engine);
 }
 
-Solution simulatedAnnealing(Instance instance, Solution initialSolution){
+Solution simulatedAnnealing(Instance instance, Solution initialSolution, double To){
   Solution solution(initialSolution);
   printSolution(solution.actual);
   getSolutionDamages(instance, &solution);
@@ -493,9 +518,14 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution){
   int totalInserts = 0;
   int cambiosAceptados = 0;
   int peoresAceptadas = 0;
-  double To = getInitialTemperature(instance);
+  bool improvement = false;
+  int withoutImprovement = 0;
+  std::chrono::steady_clock::time_point clock_begin = std::chrono::steady_clock::now();
   while(To > Tend){
-    To = To * c;
+    std::cout << To << " temperature now\n";
+    improvement == false ? withoutImprovement++ : withoutImprovement = withoutImprovement/2; 
+    improvement = false;
+    withoutImprovement < 100 ? To = To * c : To = To * 1.15 ;
     double swapsAccepted = 0;
     double insertsAccepted = 0;
     double accepted = 0;
@@ -537,6 +567,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution){
         solution.totalCostActual = solution.totalCostNeighbour;
         solution.trucksActual = solution.trucksNeighbour;
         solution.damagesActual = solution.damagesNeighbour;
+        improvement = true;
         // std::cout << "---------------\n";
         // std::cout << solution.totalCostActual << "actual \n";
         // std::cout << solution.totalCostBest << "mejor \n";
@@ -583,12 +614,24 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution){
       }
       //solution.totalCostBest = 0;
     }
+    //std::cout << withoutImprovement << " sin mejora\n";
+    std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
+
+    std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
+    double nseconds = double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den;
+    if(nseconds/60 > 20){
+      To = -1;
+    }
     totalInserts+= insertsAccepted;
     totalSwaps+= swapsAccepted;
     //std::cout << accepted << "Accepted\n";
 
   }
-  std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
+  std::vector<std::vector<int>> bestImproved;
+  for(int k = 0; k < 12; k++){
+    bestImproved = twoOptOptimizationBest(solution, instance);
+    solution.best = bestImproved;
+  }
   Solution solutionAux(bestImproved);
   getSolutionDamages(instance, &solutionAux);
   getSolutionCost(instance, &solutionAux);
@@ -598,10 +641,16 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution){
   solution.totalCostBest =  solutionAux.totalCostActual;
   std::cout << solution.totalCostBest << "solucion improved cost\n";
   //printSolution(bestImproved);
-  std::cout << totalSwaps << "totalSwaps\n";
-  std::cout << totalInserts << "totalInserts\n";
-  std::cout << cambiosAceptados << "cambios aceptados\n";
-  std::cout << peoresAceptadas << "peores aceptados\n";
+  std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
+  dataFile << double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den << " tiempo en segundos\n";
+  dataFile << solution.totalCostBest << " Mejor costo encontrado\n";
+  writeSolution(solution.best);
+  writeTrucks(solution.trucksBest);
+  dataFile << totalSwaps << " totalSwaps\n";
+  dataFile << totalInserts << " totalInserts\n";
+  dataFile << cambiosAceptados << " cambios aceptados\n";
+  dataFile << peoresAceptadas << " peores aceptados\n";
   solution.actual = solution.best;
   solution.totalCostActual = solution.totalCostBest;
   solution.trucksActual = solution.trucksBest;
@@ -639,6 +688,8 @@ int main(int argc, char* argv[]) {
     MAX_DAMAGE = std::stoi(argv[5]);
     swapMoves = std::stoi(argv[6]);
     std::string filename = argv[7];
+    dataFile.open("data.dat");
+
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
 
@@ -653,13 +704,15 @@ int main(int argc, char* argv[]) {
     //std::cout << 'mejor solucion';
     //printSolution(solution.best);
     // printSolution(gred.actual);
+    double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
-    Solution test = simulatedAnnealing(instancia, greedy); 
-    Solution final = simulatedAnnealing(instancia, test);
-    printSolution(final.best);
-    printTrucks(final.trucksBest);
+    Solution test = simulatedAnnealing(instancia, greedy, To); 
+    getSolutionDamages(instancia, &test);
+    printSolution(test.best);
+    printTrucks(test.trucksBest);
+    print_vector(test.damagesActual);
     //std::cout << getInitialTemperature(instancia);
-
+    dataFile.close();
 
     return 0;
 }
