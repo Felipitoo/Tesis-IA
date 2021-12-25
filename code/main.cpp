@@ -120,54 +120,56 @@ std::vector<int> getRandomPositions(size_t nodes,int quantity, unsigned seed){
 }
 
 // movimiento tipo swap en que se intercambia 1 o más nodos consecutivos entre dos rutas CHEQUEADO BIEN
-bool randomSwapMove(Instance instancia, Solution* solution, int camion1, int camion2){
-    std::vector<int> route1(solution->neighbour[camion1]);
-    std::vector<int> route2(solution->neighbour[camion2]);
-    if(route1.size() == 0 || route2.size() == 0) return false;
-    size_t minorSize = 0;
-    route1.size() >= route2.size() ? minorSize = route2.size() : minorSize = route1.size();    
-    //std::random_device random_device;
-    std::mt19937 engine{generateSeed()};
-    //int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
-    std::uniform_int_distribution<int> dist(0, route1.size() - 1);
-    std::uniform_int_distribution<int> dist2(0, route2.size() - 1);
-    std::uniform_int_distribution<int> dist3(1, swapMoves);
-    size_t swapMovesIteration = dist3(engine);
-    if(swapMovesIteration > minorSize){
-      swapMovesIteration = minorSize;
-    }
-    std::vector<int> randomPosRoute1 = getRandomPositions(route1.size(), swapMovesIteration, generateSeed());
-    std::vector<int> randomPosRoute2 = getRandomPositions(route2.size(), swapMovesIteration, generateSeed());
-    size_t i = 0;
-    size_t j = 0;
-    size_t k = 0;
-    std::vector<int> initialRoute1(route1);
-    std::vector<int> initialRoute2(route2);
-    // solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
-    std::vector<Truck> aux(solution->trucksActual);
-    while(k < swapMovesIteration){ // while verifica que el i/j no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
-        i = randomPosRoute1[k];
-        j = randomPosRoute2[k];
-        aux[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        aux[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
-        std::iter_swap(route1.begin() + i, route2.begin() + j);
-        aux[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
-        aux[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
-        k = k + 1 ;
-    }
-    if((aux[camion1].availableCapacity < 0) || (aux[camion2].availableCapacity < 0)){
-        solution->trucksNeighbour.clear();
-        solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
-        return false;
-    }
-    //print_vector(route1);
-    //print_vector(route2);
-    solution->trucksNeighbour.clear();
-    solution->trucksNeighbour = aux;
-    solution->neighbour.at(camion1) = route1;
-    solution->neighbour.at(camion2) = route2;
-    return true;
-}
+// bool randomSwapMove(Instance instancia, Solution* solution, int camion1, int camion2){
+//     std::vector<int> route1(solution->neighbour[camion1]);
+//     std::vector<int> route2(solution->neighbour[camion2]);
+//     if(route1.size() == 0 || route2.size() == 0) return false;
+//     size_t minorSize = 0;
+//     route1.size() >= route2.size() ? minorSize = route2.size() : minorSize = route1.size();    
+//     //std::random_device random_device;
+//     std::mt19937 engine{generateSeed()};
+//     //int menor = route1->size() - 1 < route2->size() - 1 ? route1->size() - 1 : route2->size() - 1; // evita elegir un punto de partida que sobrepase a la ruta de mayor largo
+//     std::uniform_int_distribution<int> dist(0, route1.size() - 1);
+//     std::uniform_int_distribution<int> dist2(0, route2.size() - 1);
+//     std::uniform_int_distribution<int> dist3(1, swapMoves);
+//     size_t swapMovesIteration = dist3(engine);
+//     if(swapMovesIteration > minorSize){
+//       swapMovesIteration = minorSize;
+//     }
+//     std::vector<int> randomPosRoute1 = getRandomPositions(route1.size(), swapMovesIteration, generateSeed());
+//     std::vector<int> randomPosRoute2 = getRandomPositions(route2.size(), swapMovesIteration, generateSeed());
+//     size_t i = 0;
+//     size_t j = 0;
+//     size_t k = 0;
+//     std::vector<int> initialRoute1(route1);
+//     std::vector<int> initialRoute2(route2);
+//     // solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
+//     std::vector<Truck> aux(solution->trucksActual);
+//     while(k < swapMovesIteration){ // while verifica que el i/j no sobrepase los limites de ninguna ruta y ademas que este contenido dentro del maximo swap
+//         i = randomPosRoute1[k];
+//         j = randomPosRoute2[k];
+//         aux[camion1].availableCapacity+= instancia.nodes[route1[i]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+//         aux[camion2].availableCapacity+= instancia.nodes[route2[j]].demand; // remueve el nodo elegido y aumenta la capacidad disponible segun la demanda del nodo
+//         std::iter_swap(route1.begin() + i, route2.begin() + j);
+//         aux[camion1].availableCapacity-= instancia.nodes[route1[i]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+//         aux[camion2].availableCapacity-= instancia.nodes[route2[j]].demand; // Agrega el nodo elegido y disminuye la capacidad disponible segun la demanda del nodo
+//         k = k + 1 ;
+//     }
+//     if((aux[camion1].availableCapacity < 0) || (aux[camion2].availableCapacity < 0)){
+//         solution->trucksNeighbour.clear();
+//         solution->trucksNeighbour = std::vector<Truck> (solution->trucksActual);
+//         return false;
+//     }
+//     //print_vector(route1);
+//     //print_vector(route2);
+//     solution->trucksNeighbour.clear();
+//     solution->trucksNeighbour = aux;
+//     solution->neighbour.at(camion1).clear(); 
+//     solution->neighbour.at(camion1) = route1;
+//     solution->neighbour.at(camion2).clear();
+//     solution->neighbour.at(camion2) = route2;
+//     return true;
+// }
 
 // movimiento tipo swap en que se intercambia 1 o más nodos consecutivos entre dos rutas CHEQUEADO BIEN
 bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
@@ -207,12 +209,17 @@ bool swapMove(Instance instancia, Solution* solution, int camion1, int camion2){
     //print_vector(route2);
     solution->trucksNeighbour.clear();
     solution->trucksNeighbour = aux;
+    // std::cout << "swap: \n";
+    // print_vector(route1);
+    // print_vector(route2);
+    solution->neighbour.at(camion1).clear(); 
     solution->neighbour.at(camion1) = route1;
+    solution->neighbour.at(camion2).clear();
     solution->neighbour.at(camion2) = route2;
     return true;
 }
 
-// movimiento que inserta un nodo de una ruta en otra ruta (puede agregar a rutas vacias)
+// movimiento que inserta N cantidad de nodos en otra de una ruta en otra ruta (puede agregar a rutas vacias)
 bool insertMove(Instance instance, Solution* solution, int camion1, int camion2){
     //std::cout << "camion 1 " << camion1 << "camion 2 " << camion2 << "\n"; 
     std::vector<int> route1(solution->neighbour[camion1]); 
@@ -268,7 +275,12 @@ bool insertMove(Instance instance, Solution* solution, int camion1, int camion2)
     // print_vector(aux);
     solution->trucksNeighbour.clear();
     solution->trucksNeighbour = aux;
+    //std::cout << "insert: \n";
+    // print_vector(route1Aux);
+    // print_vector(route2);
+    solution->neighbour.at(camion1).clear(); 
     solution->neighbour.at(camion1) = route1Aux;
+    solution->neighbour.at(camion2).clear();
     solution->neighbour.at(camion2) = route2;
     return true;
 }
@@ -315,7 +327,9 @@ bool insertMoveOriginal(Instance instance, Solution* solution, int camion1, int 
     // print_vector(aux);
     solution->trucksNeighbour.clear();
     solution->trucksNeighbour = aux;
+    solution->neighbour.at(camion1).clear(); 
     solution->neighbour.at(camion1) = route1;
+    solution->neighbour.at(camion2).clear();
     solution->neighbour.at(camion2) = route2;
     return true;
 }
@@ -352,33 +366,33 @@ Solution greedySolution(Instance instancia){
 }
 
 // genera solución random que solo verifica restricción de capacidad
-Solution randomSolution(Instance instancia){
-    instancia.shuffleReferenceListNodes(generateSeed());
-    //std::random_device random_device;
-    std::mt19937 engine{generateSeed()};
-    std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
-    std::vector<Truck> trucks = instancia.trucks;
-    std::vector<std::vector<int>> randomSolution(trucks.size());
-        for(int referencia : instancia.referenceListNodes) {
-          bool assigned = false;
-          int i = 0;
-          Node nodo = instancia.nodes[referencia];
-          while(assigned == false && nodo.demand != 0){
-              i = dist(engine);
-              if(nodo.demand < trucks[i].availableCapacity){
-                  assigned = true;
-                  trucks[i].availableCapacity-=nodo.demand;
-                  randomSolution[trucks[i].id].push_back(nodo.id);
-              }
-              i++;
-          }
-    }
-    Solution random = Solution(randomSolution);
-    random.trucksActual = trucks;
-    random.trucksNeighbour = trucks;
+// Solution randomSolution(Instance instancia){
+//     instancia.shuffleReferenceListNodes(generateSeed());
+//     //std::random_device random_device;
+//     std::mt19937 engine{generateSeed()};
+//     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
+//     std::vector<Truck> trucks = instancia.trucks;
+//     std::vector<std::vector<int>> randomSolution(trucks.size());
+//         for(int referencia : instancia.referenceListNodes) {
+//           bool assigned = false;
+//           int i = 0;
+//           Node nodo = instancia.nodes[referencia];
+//           while(assigned == false && nodo.demand != 0){
+//               i = dist(engine);
+//               if(nodo.demand < trucks[i].availableCapacity){
+//                   assigned = true;
+//                   trucks[i].availableCapacity-=nodo.demand;
+//                   randomSolution[trucks[i].id].push_back(nodo.id);
+//               }
+//               i++;
+//           }
+//     }
+//     Solution random = Solution(randomSolution);
+//     random.trucksActual = trucks;
+//     random.trucksNeighbour = trucks;
 
-    return random;
-}
+//     return random;
+// }
 
 // calcula el daño de una ruta
 float getRouteDamage(std::vector<int> route, Instance instance){
@@ -471,7 +485,11 @@ void getSolutionDamages(Instance instance, Solution* solution){
         i++;
     }
     i = 0;
+    // std::cout << "solucion: \n";
+    // printSolution(solution->neighbour);
     for(std::vector<int> route: solution->neighbour){
+        // std::cout << "vecino: \n";
+        // print_vector(route);
         damage = getRouteDamage(route, instance);
         //std::cout << damage << "neighbour \n";
         solution->damagesNeighbour[i] = damage;
@@ -497,10 +515,14 @@ std::vector<int> twoOptSwap(std::vector<int> route, int i, int k){
 
 bool twoOptMove(Instance instancia, Solution* solution, int camion1){
     std::vector<int> route1(solution->neighbour[camion1]);
+    if(route1.size() < 2) return false;
     std::vector<int> randomPos  = getRandomPositions(route1.size(), 2, generateSeed());
+    //print_vector(randomPos);
     std::sort(randomPos.begin(), randomPos.end());
     std::vector<int> routeWithMove = twoOptSwap(route1, randomPos[0], randomPos[1]);
     solution->neighbour.at(camion1) = routeWithMove;
+    std::cout << "2opt: \n";
+    //print_vector(route1);
     return true;
 }
 
@@ -622,12 +644,12 @@ void getArcTypeContition(Instance instance,Solution solution, int type){
   // print_vector(statesCount);
 }
 
-float getProbability(double total, double part){
-  if (total == 0){
-    return 0.33;
-  }
-  return 0.10 + 0.7 * (part/total);
-}
+// float getProbability(double total, double part){
+//   if (total == 0){
+//     return 0.33;
+//   }
+//   return 0.10 + 0.7 * (part/total);
+// }
 
 float throwCoin(){
   std::mt19937 engine{generateSeed()};
@@ -644,8 +666,9 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   solution.best = solution.actual;
   solution.totalCostBest = solution.totalCostActual;
   //std::cout << solution.totalCostActual << "mejor costo inicial";
-  int totalSwaps = 0;
-  int totalInserts = 0;
+  double totalSwaps = 0;
+  double totalInserts = 0;
+  double totalTwoOpt = 0;
   int cambiosAceptados = 0;
   int peoresAceptadas = 0;
   bool improvement = false;
@@ -659,8 +682,12 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
     withoutImprovement < 100 ? To = To * c : To = initialTo ;
     double swapsAccepted = 0;
     double insertsAccepted = 0;
+    double twoOptsAccepted = 0;
     double accepted = 0;
     bool acceptedSwap = true;
+    bool acceptedInsert = true;
+    bool acceptedTwoOpt = true;
+
     for(int i=0; i < lvlLoop; i++){
       solution.neighbour = solution.actual;
       solution.totalCostNeighbour = solution.totalCostActual;
@@ -674,18 +701,22 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         //float pInsert = getProbability(accepted, insertsAccepted);
         //float pSwaps = getProbability(accepted, swapsAccepted);
         acceptedSwap = false;
+        acceptedInsert = false;
+        acceptedTwoOpt = false;
         if(coin <= 0.33){
           //aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
           //std::cout << "insert\n";
           aceptado = insertMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+          acceptedInsert = aceptado;
         }
         else if(coin > 0.33 && coin < 0.66){
           aceptado = twoOptMove(instance,&solution,randomTrucks[0]);
-          acceptedSwap = true;
+          acceptedTwoOpt = aceptado;
           //std::cout << "Swap\n";
         }
         else{
           aceptado = swapMove(instance,&solution,randomTrucks[0],randomTrucks[1]);
+          acceptedSwap = aceptado;
           //aceptado = randomSwapMove(instance,&solution,randomTrucks[0],randomTrucks[1]); Este es el swap move random
           //std::cout << "twoOpt\n";
         }
@@ -702,7 +733,10 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
       // std::cout << "---------------\n";
       if (solution.totalCostNeighbour < solution.totalCostActual){
         accepted++;
-        acceptedSwap == true ? swapsAccepted++ : insertsAccepted++;
+        if(acceptedSwap == true) swapsAccepted++;
+        if(acceptedTwoOpt == true) twoOptsAccepted++;
+        if(acceptedInsert == true) insertsAccepted++;
+
         solution.actual = solution.neighbour;
         solution.totalCostActual = solution.totalCostNeighbour;
         solution.trucksActual = solution.trucksNeighbour;
@@ -742,15 +776,17 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         double P = std::pow(EulerConstant, -delta/To);
         //std::cout << To << "To \n";
         if(delta == 0){
-          std::cout << delta << "delta \n";
+          //std::cout << delta << "delta \n";
           printSolution(solution.actual);
           printSolution(solution.neighbour);
         }
-        std::cout << P << "chance of acceptance \n";
+        //std::cout << P << "chance of acceptance \n";
         double randomChance = getRandomChance(generateSeed());
         if( P > randomChance){
           accepted++;
-          acceptedSwap == true ? swapsAccepted++ : insertsAccepted++;
+          if(acceptedSwap == true) swapsAccepted++;
+          if(acceptedTwoOpt == true) twoOptsAccepted++;
+          if(acceptedInsert == true) insertsAccepted++;
           solution.actual = solution.neighbour;
           solution.totalCostActual = solution.totalCostNeighbour;
           solution.trucksActual = solution.trucksNeighbour;
@@ -770,6 +806,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
     }
     totalInserts+= insertsAccepted;
     totalSwaps+= swapsAccepted;
+    totalTwoOpt+= twoOptsAccepted;
     //std::cout << accepted << "Accepted\n";
 
   }
@@ -796,6 +833,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   writeTrucks(solution.trucksBest);
   dataFile << totalSwaps << " totalSwaps\n";
   dataFile << totalInserts << " totalInserts\n";
+  dataFile << totalTwoOpt << " totalTwoOpts\n";
   dataFile << cambiosAceptados << " cambios aceptados\n";
   dataFile << peoresAceptadas << " peores aceptados\n";
   dataFile << "--------------------------\n";
