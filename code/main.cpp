@@ -521,7 +521,7 @@ bool twoOptMove(Instance instancia, Solution* solution, int camion1){
     std::sort(randomPos.begin(), randomPos.end());
     std::vector<int> routeWithMove = twoOptSwap(route1, randomPos[0], randomPos[1]);
     solution->neighbour.at(camion1) = routeWithMove;
-    std::cout << "2opt: \n";
+    //std::cout << "2opt: \n";
     //print_vector(route1);
     return true;
 }
@@ -777,8 +777,8 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         //std::cout << To << "To \n";
         if(delta == 0){
           //std::cout << delta << "delta \n";
-          printSolution(solution.actual);
-          printSolution(solution.neighbour);
+          //printSolution(solution.actual);
+          //printSolution(solution.neighbour);
         }
         //std::cout << P << "chance of acceptance \n";
         double randomChance = getRandomChance(generateSeed());
