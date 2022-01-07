@@ -81,7 +81,7 @@ std::vector<float> createEmptyVector(int dimension){
 Instance::Instance(std::string filename){
   std::ifstream infile(filename);
   std::string mytext;
-  bool EWS, TOA, COA, D, DAM = false;
+  bool EWS = false, TOA = false, COA = false, D = false, DAM = false;
   int i = 0;
   int k = 0;
   std::vector<std::string> words;

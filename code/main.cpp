@@ -83,6 +83,15 @@ void writeVector(std::vector<int> vect){
     dataFile << "\n";
 }
 
+template<typename T>
+void printTrucksPlus(std::vector<Truck> camiones, std::vector<T> damages){
+  int i = 0;
+  for(Truck camion: camiones){
+    std::cout << "Camion: " << i << "/ Capacidad Total : " << camion.totalCapacity << "/ Disponible: " << camion.availableCapacity << "/" << camion.totalCapacity - camion.availableCapacity << "/ Daño " << damages[i] << "\n";  
+    i++;
+  }
+}
+
 // funcion template para printear un vector de vectores (una matriz)
 template<typename T>
 void print_matrix(std::vector<std::vector<T>> matrix){
@@ -117,6 +126,12 @@ std::vector<int> getRandomPositions(size_t nodes,int quantity, unsigned seed){
     randomPositions.push_back(v[i]);
   }
   return randomPositions;
+}
+
+void printMetrics(Solution solution){
+  printSolution(solution.best);
+  printTrucksPlus(solution.trucksBest, solution.damagesBest);
+  print_vector(solution.costsBest);
 }
 
 // movimiento tipo swap en que se intercambia 1 o más nodos consecutivos entre dos rutas CHEQUEADO BIEN
@@ -474,7 +489,7 @@ void getSolutionCost(Instance instance, Solution* solution){
 // }
 
 
-// verifica que no se rompa la restricción de daño
+// calcula el daño para la solución actual y vecina
 void getSolutionDamages(Instance instance, Solution* solution){
     float damage = 0;
     int i = 0;
@@ -495,6 +510,34 @@ void getSolutionDamages(Instance instance, Solution* solution){
         solution->damagesNeighbour[i] = damage;
         i++;
     }
+}
+
+// calcula los daños de la mejor solucion
+std::vector<float> getBestDamages(Instance instance, Solution* solution){
+    float damage = 0;
+    std::vector<float> bestDamages(solution->best.size(), 0);
+    int i = 0;
+    for(std::vector<int> route: solution->best){
+        damage = getRouteDamage(route, instance);
+        //std::cout << damage << "actual \n";
+        bestDamages[i] = damage;
+        i++;
+    }
+  return bestDamages;
+}
+
+// calcula los costos de la mejor solucion
+std::vector<float> getBestCosts(Instance instance, Solution* solution){
+    float cost = 0;
+    std::vector<float> bestCosts(solution->best.size(), 0);
+    int i = 0;
+    for(std::vector<int> route: solution->best){
+        cost = getRouteCost(route, instance);
+        //std::cout << damage << "actual \n";
+        bestCosts[i] = cost;
+        i++;
+    }
+  return bestCosts;
 }
 
 std::vector<int> twoOptSwap(std::vector<int> route, int i, int k){
@@ -673,13 +716,18 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   int peoresAceptadas = 0;
   bool improvement = false;
   int withoutImprovement = 0;
-  double initialTo = To;
+  double initialTo = To/10;
   std::chrono::steady_clock::time_point clock_begin = std::chrono::steady_clock::now();
-  while(To > Tend){
+  int stuck = 0;
+  while(To > Tend || stuck < 100){
     //std::cout << To << " temperature now\n";
+    stuck++;
     improvement == false ? withoutImprovement++ : withoutImprovement = withoutImprovement/2; 
     improvement = false;
-    withoutImprovement < 100 ? To = To * c : To = initialTo ;
+    //withoutImprovement < 100 ? To = To * c : To = initialTo ;
+    if(withoutImprovement < 1000) To = To * c;
+    else{To = initialTo; std::cout << "================================================> Recalentamiento baby!" << std::endl; }
+     
     double swapsAccepted = 0;
     double insertsAccepted = 0;
     double twoOptsAccepted = 0;
@@ -747,6 +795,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         // std::cout << "---------------\n";
         improvement = true;
         if(solution.totalCostNeighbour < solution.totalCostBest){
+            stuck=0;
             solution.best =  solution.neighbour;
             solution.totalCostBest =  solution.totalCostNeighbour;
             solution.trucksBest = solution.trucksNeighbour;
@@ -821,7 +870,9 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   // std::cout << "solucion improved\n";
   //printSolution(bestImproved);
   solution.best =  bestImproved;
-  solution.totalCostBest =  solutionAux.totalCostActual;
+  solution.totalCostBest = solutionAux.totalCostActual;
+  solution.costsBest = getBestCosts(instance, &solution);
+  solution.damagesBest = getBestDamages(instance, &solution);
   std::cout << solution.totalCostBest << "solucion improved cost\n";
   //printSolution(bestImproved);
   std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
@@ -886,20 +937,21 @@ int main(int argc, char* argv[]) {
     Solution greedy = greedySolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     getSolutionDamages(instancia, &test);
-    printSolution(test.best);
-    printTrucks(test.trucksBest);
-    print_vector(test.damagesActual);
-    std::cout << To;
-    std::vector<std::vector<int>> en51 = {
-      {1,11,38,27,32,28,25,14,48,24},
-      {2,3,22,35,36,29,16,40,44,17,4,47},
-      {45,10,34,30,49,39,33,15,5,46},
-      {50,21,9,20,8,31,26,23,43,7,6},
-      {18,13,41,19,42,37,12}
-    };
-    Solution en51Solution(en51);
-    getSolutionCost(instancia,&en51Solution);
-    std::cout << en51Solution.totalCostActual;
+    //printTrucks(test.trucksBest);
+    printTrucksPlus(test.trucksBest, test.damagesBest);
+    //print_vector(test.damagesActual);
+    //std::cout << To;
+    // std::vector<std::vector<int>> en51 = {
+    //   {1,11,38,27,32,28,25,14,48,24},
+    //   {2,3,22,35,36,29,16,40,44,17,4,47},
+    //   {45,10,34,30,49,39,33,15,5,46},
+    //   {50,21,9,20,8,31,26,23,43,7,6},
+    //   {18,13,41,19,42,37,12}
+    // };
+    // Solution en51Solution(en51);
+    // getSolutionCost(instancia,&en51Solution);
+    // std::cout << en51Solution.totalCostActual;
+    dataFile.close();
 
     dataFile.close();
 

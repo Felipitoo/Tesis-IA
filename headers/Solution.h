@@ -7,8 +7,10 @@ class Solution
 public:
     std::vector<float> damagesActual;
     std::vector<float> damagesNeighbour;
+    std::vector<float> damagesBest;
     std::vector<float> costsActual;
     std::vector<float> costsNeighbour;
+    std::vector<float> costsBest;
     float totalCostActual;
     float totalCostNeighbour;
     float totalCostBest;
