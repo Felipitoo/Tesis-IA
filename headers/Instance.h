@@ -8,7 +8,7 @@
 class Instance {
 public:
     std::vector<std::vector<float>> costMatrix; // Matriz de costos segun formula del modelo
-    std::vector<std::vector<int>> stateMatrix; // estado del arco del grafo
+    std::vector<std::vector<int>> conditionMatrix; // condición del arco del grafo
     std::vector<std::vector<int>> typeMatrix; // tipo de arco del grafo
     std::vector<std::vector<int>> distanceMatrix; // distancia entre los nodos
     std::vector<std::vector<float>> damages;
@@ -26,11 +26,6 @@ public:
     void shuffleReferenceListNodes(unsigned seed);
     void sortNodes();
     void setTruckIds();
-    // int getCostMatrix() const;
-    // int getStateMatrix() const;
-    // int getTypeMatrix() const;
-    // int getTrucks() const;
 
-    // void printAll();
 
 };

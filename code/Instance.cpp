@@ -90,7 +90,7 @@ Instance::Instance(std::string filename){
         split(mytext, words, ' ');
         this->dimension = std::stoi(words[1]);
         this->costMatrix = createEmptyMatrixFloat(this->dimension, this->dimension);
-        this->stateMatrix = createEmptyMatrix(this->dimension, this->dimension);
+        this->conditionMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->typeMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->distanceMatrix = createEmptyMatrix(this->dimension, this->dimension);
         this->damages = createDamagesMatrix(6,3);
@@ -151,7 +151,7 @@ Instance::Instance(std::string filename){
         for(std::string costo: words){
           //std::cout << "Type  " << std::stoi(costo) << '\n';
           // std::cout << k << "  " << column << '\n';
-          this->stateMatrix[k][column] = std::stoi(costo);
+          this->conditionMatrix[k][column] = std::stoi(costo);
           column++;      
         }
         k++;

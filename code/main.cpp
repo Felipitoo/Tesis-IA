@@ -7,6 +7,7 @@
 #include <cmath>
 #include <fstream>
 #include <math.h>
+#include <numeric>
 #include "../headers/Instance.h"
 #include "../headers/Solution.h"
 
@@ -20,6 +21,7 @@ const double EulerConstant = std::exp(1.0);
 double seed = 21;
 float c = 0.95;
 float Tend = 1;
+int count = 0;
 int lvlLoop = 100;
 std::ofstream dataFile;
 
@@ -56,6 +58,15 @@ void writeTrucks(std::vector<Truck> camiones){
     dataFile << camion.totalCapacity - camion.availableCapacity << "Recolectado \n";  
     i++;
   }
+}
+
+std::vector<std::vector<double>> createEmptyMatrixDouble(int rows, int columns){
+  int i;
+  std::vector<std::vector<double>> matrix(rows);
+  for(i = 0 ; i < rows; i++){
+      matrix[i].resize(columns);
+  }
+  return matrix;
 }
 
 // funcion que printea los nodos
@@ -417,7 +428,7 @@ float getRouteDamage(std::vector<int> route, Instance instance){
     }
     std::vector<std::vector<float>> damages = instance.damages;
     std::vector<std::vector<int>> types = instance.typeMatrix;
-    std::vector<std::vector<int>> states = instance.stateMatrix;
+    std::vector<std::vector<int>> states = instance.conditionMatrix;
     std::vector<std::vector<int>> distances = instance.distanceMatrix;
     int initialState = states[0][route[0]];
     int initialType = types[0][route[0]];
@@ -661,7 +672,7 @@ void getArcTypeContition(Instance instance,Solution solution, int type){
     if(route.size() == 0);
 
     std::vector<std::vector<int>> types = instance.typeMatrix;
-    std::vector<std::vector<int>> states = instance.stateMatrix;
+    std::vector<std::vector<int>> states = instance.conditionMatrix;
     int initialState = states[0][route[0]];
     int initialType = types[0][route[0]];
     int finalState = states[route[route.size()-1]][0];
@@ -894,6 +905,59 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   return solution;
 }
 
+double getFixedCostFromRoute(std::vector<int> route, std::vector<std::vector<double>> fixedCosts){
+    double cost = 0;
+    if(route.size() == 0){
+        return cost;
+    }
+    std::vector<std::vector<double>> matrix = fixedCosts;
+    cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
+    size_t i = 1;
+    //std::cout << instance.costMatrix[0][route[0]];
+    while(i < route.size()){
+        //std::cout << cost << " cost\n";
+        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
+        cost = cost + matrix[route[i-1]][route[i]];
+        i++; 
+    }
+    return cost;
+}
+
+std::vector<float> getFixedCostsFromSolution(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts){
+  double cost = 0;
+  std::vector<float> fixedCostsSolution(instance.dimension);
+  int i = 0;
+  for(std::vector<int> route: solution.best){
+      cost = getFixedCostFromRoute(route, fixedCosts);
+      fixedCostsSolution[i] = cost;
+      i++;
+  }
+  return fixedCostsSolution;
+}
+
+void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts, char* filename){
+  std::ofstream csvFile;
+  bool flag = true;
+  csvFile.open("resume.csv", std::ios_base::app);
+  if( !csvFile.is_open() ) std::cerr << "could not open file\n" ;
+  while(!csvFile.eof() || flag == true) {
+    count++;
+    if(count == 0){
+      flag = false;
+    }
+  }
+  if(count == 0) {
+    csvFile << "filename,Best,c,cto\n";
+  }
+  std::vector<float> fixedCostsSol = getFixedCostsFromSolution(instance,solution,fixedCosts);
+  std::vector<float> variableCostsSol = solution.costsBest;
+  std::transform(variableCostsSol.begin(), variableCostsSol.end(), fixedCostsSol.begin(), variableCostsSol.begin(), std::minus<float>());
+  float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
+  float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
+  csvFile << filename << "," << solution.totalCostBest << "," << totalFixed << "," << totalVariable;
+
+} 
+
 int main(int argc, char* argv[]) {
     //std::string filename = "../Instances/paper_colombia.txt";
     if (argc < 9) {
@@ -919,6 +983,7 @@ int main(int argc, char* argv[]) {
     // std::vector<int> c = {7,8};
     // std::vector<std::vector<int>> aux = {a,b,c};
     // aux.at(0) = c;
+    std::cout << "asdlkaskjhdsajkads";
     seed = std::stod(argv[1]);
     c = std::stof(argv[2]);
     Tend = std::stof(argv[3]);
@@ -931,7 +996,6 @@ int main(int argc, char* argv[]) {
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 
-
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
@@ -939,20 +1003,26 @@ int main(int argc, char* argv[]) {
     getSolutionDamages(instancia, &test);
     //printTrucks(test.trucksBest);
     printTrucksPlus(test.trucksBest, test.damagesBest);
-    //print_vector(test.damagesActual);
-    //std::cout << To;
-    // std::vector<std::vector<int>> en51 = {
-    //   {1,11,38,27,32,28,25,14,48,24},
-    //   {2,3,22,35,36,29,16,40,44,17,4,47},
-    //   {45,10,34,30,49,39,33,15,5,46},
-    //   {50,21,9,20,8,31,26,23,43,7,6},
-    //   {18,13,41,19,42,37,12}
-    // };
-    // Solution en51Solution(en51);
-    // getSolutionCost(instancia,&en51Solution);
-    // std::cout << en51Solution.totalCostActual;
-    dataFile.close();
-
+    int numberOfNodes = instancia.dimension;
+    std::vector<std::vector<double>> fixedCosts = createEmptyMatrixDouble(numberOfNodes,numberOfNodes);
+    int capacidad = instancia.trucks[0].totalCapacity;
+    std::vector<std::vector<int>> condicionArcos = instancia.conditionMatrix;
+    double CF = (935.19/30.0)/capacidad; //Costo fijo vehicular.
+    float ICV = 0.1489;  // Indicador costo variable ICV
+    double CVij = 0; 
+    for(int i = 0; i < numberOfNodes ; i++){
+      fixedCosts[i][i] = 0;
+      for(int j = 0; j < i ; j++){
+        CVij = ICV * (float) instancia.distanceMatrix[i][j];
+        if (condicionArcos[i][j] == 0) {
+            CVij += 3.14; //Peajes
+        }
+        fixedCosts[i][j] = ((1.05*( CVij + CF))/(1 - 0.133)) * capacidad; //* 3743 #Peso colombiano al 12.10.21 
+        fixedCosts[j][i] = fixedCosts[i][j];
+      }
+    }
+    createCSVResumeFile(instancia, test, fixedCosts, argv[8]);
+    
     dataFile.close();
 
     return 0;
