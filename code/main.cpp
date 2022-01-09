@@ -8,6 +8,7 @@
 #include <fstream>
 #include <math.h>
 #include <numeric>
+#include <sys/resource.h>
 #include "../headers/Instance.h"
 #include "../headers/Solution.h"
 
@@ -632,7 +633,7 @@ double getInitialTemperature(Instance instance){
   getSolutionCost(instance, &solution);
   int i = 0;
   double mayor = 0;
-  while(i < 1000){
+  while(i < 500){
     std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
     bool aceptado = false;
     while(aceptado != true){
@@ -663,9 +664,15 @@ double getInitialTemperature(Instance instance){
   return mayor;
 }
 
+long getMemUsage(){
+  struct rusage myusage;
+  getrusage(RUSAGE_SELF, &myusage);
+  return myusage.ru_maxrss;
+}
+
 void getArcTypeContition(Instance instance,Solution solution, int type){
   std::vector<int> typesCount(3,0);
-  std::vector<int> statesCount(5,0);
+  std::vector<int> statesCount(6,0);
   std::vector<std::vector<int>> choosen;
   choosen = type == 0 ? solution.best : solution.actual;
   for(std::vector<int> route : choosen){
@@ -730,7 +737,13 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   double initialTo = To/10;
   std::chrono::steady_clock::time_point clock_begin = std::chrono::steady_clock::now();
   int stuck = 0;
-  while(To > Tend || stuck < 100){
+  double nseconds = 0;
+  int minutes = 0;
+  while(minutes < 60  || To > Tend){
+    if (minutes > 9){
+      std::cout << minutes;
+    }
+    //std::cout << getMem << "  now\n";
     //std::cout << To << " temperature now\n";
     stuck++;
     improvement == false ? withoutImprovement++ : withoutImprovement = withoutImprovement/2; 
@@ -860,10 +873,9 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
     std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
 
     std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
-    double nseconds = double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den;
-    if(nseconds/60 > 12){
-      To = -1;
-    }
+    nseconds = double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den;
+    minutes = nseconds/60;
+
     totalInserts+= insertsAccepted;
     totalSwaps+= swapsAccepted;
     totalTwoOpt+= twoOptsAccepted;
@@ -937,17 +949,10 @@ std::vector<float> getFixedCostsFromSolution(Instance instance, Solution solutio
 
 void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts, char* filename){
   std::ofstream csvFile;
-  bool flag = true;
   csvFile.open("resume.csv", std::ios_base::app);
   if( !csvFile.is_open() ) std::cerr << "could not open file\n" ;
-  while(!csvFile.eof() || flag == true) {
-    count++;
-    if(count == 0){
-      flag = false;
-    }
-  }
-  if(count == 0) {
-    csvFile << "filename,Best,c,cto\n";
+  if(csvFile.tellp() == 0) {
+    csvFile << "filename,Best,fijo,variable\n";
   }
   std::vector<float> fixedCostsSol = getFixedCostsFromSolution(instance,solution,fixedCosts);
   std::vector<float> variableCostsSol = solution.costsBest;
@@ -955,7 +960,7 @@ void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::
   float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
   float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
   csvFile << filename << "," << solution.totalCostBest << "," << totalFixed << "," << totalVariable;
-
+  csvFile.close();
 } 
 
 int main(int argc, char* argv[]) {
@@ -983,7 +988,6 @@ int main(int argc, char* argv[]) {
     // std::vector<int> c = {7,8};
     // std::vector<std::vector<int>> aux = {a,b,c};
     // aux.at(0) = c;
-    std::cout << "asdlkaskjhdsajkads";
     seed = std::stod(argv[1]);
     c = std::stof(argv[2]);
     Tend = std::stof(argv[3]);
@@ -1000,7 +1004,7 @@ int main(int argc, char* argv[]) {
     double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
-    getSolutionDamages(instancia, &test);
+    //getSolutionDamages(instancia, &test);
     //printTrucks(test.trucksBest);
     printTrucksPlus(test.trucksBest, test.damagesBest);
     int numberOfNodes = instancia.dimension;
@@ -1017,10 +1021,12 @@ int main(int argc, char* argv[]) {
         if (condicionArcos[i][j] == 0) {
             CVij += 3.14; //Peajes
         }
-        fixedCosts[i][j] = ((1.05*( CVij + CF))/(1 - 0.133)) * capacidad; //* 3743 #Peso colombiano al 12.10.21 
+        CVij = CVij/capacidad;
+        fixedCosts[i][j] = round(((1.05*( CVij + CF))/(1 - 0.133)) * capacidad); //* 3743 #Peso colombiano al 12.10.21 
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
+    //print_matrix(fixedCosts);
     createCSVResumeFile(instancia, test, fixedCosts, argv[8]);
     
     dataFile.close();
