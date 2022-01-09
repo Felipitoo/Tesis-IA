@@ -739,10 +739,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   int stuck = 0;
   double nseconds = 0;
   int minutes = 0;
-  while(minutes < 60  || To > Tend){
-    if (minutes > 9){
-      std::cout << minutes;
-    }
+  while(minutes < 30  || To > Tend){
     //std::cout << getMem << "  now\n";
     //std::cout << To << " temperature now\n";
     stuck++;
@@ -767,8 +764,8 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
       solution.damagesNeighbour = solution.damagesActual;
       std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
       bool aceptado = false;
-      float coin = throwCoin();
       while(aceptado != true){
+        float coin = throwCoin();
         //aceptado = insertMove(&neighbourInstance,randomTrucks[0],randomTrucks[1],&neighbourSolution[0],&neighbourSolution[1]);
         //float pInsert = getProbability(accepted, insertsAccepted);
         //float pSwaps = getProbability(accepted, swapsAccepted);
@@ -952,14 +949,14 @@ void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::
   csvFile.open("resume.csv", std::ios_base::app);
   if( !csvFile.is_open() ) std::cerr << "could not open file\n" ;
   if(csvFile.tellp() == 0) {
-    csvFile << "filename,Best,fijo,variable\n";
+    csvFile << "filename,Best,c,cto\n";
   }
   std::vector<float> fixedCostsSol = getFixedCostsFromSolution(instance,solution,fixedCosts);
   std::vector<float> variableCostsSol = solution.costsBest;
   std::transform(variableCostsSol.begin(), variableCostsSol.end(), fixedCostsSol.begin(), variableCostsSol.begin(), std::minus<float>());
   float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
   float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
-  csvFile << filename << "," << solution.totalCostBest << "," << totalFixed << "," << totalVariable;
+  csvFile << filename << "," << solution.totalCostBest << "," << totalVariable << "," << totalFixed;
   csvFile.close();
 } 
 
