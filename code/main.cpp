@@ -914,7 +914,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   writeSolution(solution.best);
   //writeTrucks(solution.trucksBest);
   writeTrucksPlus(solution.trucksBest, solution.damagesBest);
-  dataFile << seed << " " << c << " " << Tend << " " << lvlLoop << " " << MAX_DAMAGE << " " << swapMoves << " " << maxInserts << filename << " " << " Execution params\n";
+  dataFile << originalSeed << " " << c << " " << Tend << " " << lvlLoop << " " << MAX_DAMAGE << " " << swapMoves << " " << maxInserts << filename << " " << " Execution params\n";
   dataFile << totalSwaps << " totalSwaps\n";
   dataFile << totalInserts << " totalInserts\n";
   dataFile << totalTwoOpt << " totalTwoOpts\n";
@@ -1009,7 +1009,7 @@ int main(int argc, char* argv[]) {
     dataFile.open("data.dat", std::ios_base::app);
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-    originalSeed = seed;
+    originalSeed = std::stod(argv[1]);
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
