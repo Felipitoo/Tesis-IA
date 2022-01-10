@@ -959,7 +959,7 @@ std::vector<float> getFixedCostsFromSolution(Instance instance, Solution solutio
 
 void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts, char* filename){
   std::ofstream csvFile;
-  csvFile.open("resume.csv", std::ios_base::app);
+  csvFile.open("resume.csv", std::ofstream::out | std::ofstream::app);
   if( !csvFile.is_open() ) std::cerr << "could not open file\n" ;
   if(csvFile.tellp() == 0) {
     csvFile << "filename,Best,c,cto\n";
@@ -969,7 +969,7 @@ void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::
   std::transform(variableCostsSol.begin(), variableCostsSol.end(), fixedCostsSol.begin(), variableCostsSol.begin(), std::minus<float>());
   float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
   float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
-  csvFile << filename << "," << solution.totalCostBest << "," << totalVariable << "," << totalFixed;
+  csvFile << filename << "," << solution.totalCostBest << "," << totalVariable << "," << totalFixed << "\n";
   csvFile.close();
 } 
 
