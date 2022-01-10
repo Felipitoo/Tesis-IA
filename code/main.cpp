@@ -20,6 +20,7 @@ int maxInserts = 2;
 const double EulerConstant = std::exp(1.0);
 //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
 double seed = 21;
+double originalSeed;
 float c = 0.95;
 float Tend = 1;
 int count = 0;
@@ -998,7 +999,7 @@ int main(int argc, char* argv[]) {
     dataFile.open("data.dat", std::ios_base::app);
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
-
+    originalSeed = seed;
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
