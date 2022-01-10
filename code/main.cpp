@@ -740,7 +740,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   int stuck = 0;
   double nseconds = 0;
   int minutes = 0;
-  while(minutes < 30  || To > Tend){
+  while(minutes < 1  || To > Tend){
     //std::cout << getMem << "  now\n";
     //std::cout << To << " temperature now\n";
     stuck++;
