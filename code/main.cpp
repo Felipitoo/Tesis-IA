@@ -24,6 +24,7 @@ float c = 0.95;
 float Tend = 1;
 int count = 0;
 int lvlLoop = 100;
+std::string filename;
 std::ofstream dataFile;
 
 size_t generateSeed(){
@@ -902,6 +903,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   dataFile << solution.totalCostBest << " Mejor costo encontrado\n";
   writeSolution(solution.best);
   writeTrucks(solution.trucksBest);
+  dataFile << seed << " " << c << " " << Tend << " " << lvlLoop << " " << MAX_DAMAGE << " " << swapMoves << " " << maxInserts << filename << " " << " Execution params\n";
   dataFile << totalSwaps << " totalSwaps\n";
   dataFile << totalInserts << " totalInserts\n";
   dataFile << totalTwoOpt << " totalTwoOpts\n";
@@ -992,7 +994,7 @@ int main(int argc, char* argv[]) {
     MAX_DAMAGE = std::stoi(argv[5]);
     swapMoves = std::stoi(argv[6]);
     maxInserts = std::stoi(argv[7]);
-    std::string filename = argv[8];
+    filename = argv[8];
     dataFile.open("data.dat", std::ios_base::app);
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
