@@ -52,6 +52,15 @@ void printTrucks(std::vector<Truck> camiones){
   }
 }
 
+template<typename T>
+void writeTrucksPlus(std::vector<Truck> camiones, std::vector<T> damages){
+  int i = 0;
+  for(Truck camion: camiones){
+    dataFile << "Camion: " << i << "/ Capacidad Total : " << camion.totalCapacity << "/ Disponible: " << camion.availableCapacity << "/" << camion.totalCapacity - camion.availableCapacity << "/ Daño " << damages[i] << "\n";  
+    i++;
+  }
+}
+
 void writeTrucks(std::vector<Truck> camiones){
   int i = 0;
   for(Truck camion: camiones){
@@ -903,7 +912,8 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   dataFile << double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den << " tiempo en segundos\n";
   dataFile << solution.totalCostBest << " Mejor costo encontrado\n";
   writeSolution(solution.best);
-  writeTrucks(solution.trucksBest);
+  //writeTrucks(solution.trucksBest);
+  writeTrucksPlus(solution.trucksBest, solution.damagesBest);
   dataFile << seed << " " << c << " " << Tend << " " << lvlLoop << " " << MAX_DAMAGE << " " << swapMoves << " " << maxInserts << filename << " " << " Execution params\n";
   dataFile << totalSwaps << " totalSwaps\n";
   dataFile << totalInserts << " totalInserts\n";
