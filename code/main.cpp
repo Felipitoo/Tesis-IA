@@ -27,7 +27,7 @@ int count = 0;
 int lvlLoop = 100;
 std::string filename;
 std::ofstream dataFile;
-int maxMinutes = 1;
+int maxTime = 1;
 
 size_t generateSeed(){
   seed = seed + 1;
@@ -114,6 +114,17 @@ void printTrucksPlus(std::vector<Truck> camiones, std::vector<T> damages){
     std::cout << "Camion: " << i << "/ Capacidad Total : " << camion.totalCapacity << "/ Disponible: " << camion.availableCapacity << "/" << camion.totalCapacity - camion.availableCapacity << "/ Daño " << damages[i] << "\n";  
     i++;
   }
+}
+
+template<typename T>
+bool isFeasible(std::vector<T> damages, float MAX_DAMAGE){
+  unsigned int i = 0;
+  while(i<damages.size()){
+    if (damages[i]>MAX_DAMAGE)
+        return false;
+    i++;
+  }
+  return true;
 }
 
 // funcion template para printear un vector de vectores (una matriz)
@@ -752,7 +763,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   int stuck = 0;
   double nseconds = 0;
   int minutes = 0;
-  while((minutes < maxMinutes)  && (To > Tend)){
+  while(minutes < maxTime){
     //std::cout << getMem << "  now\n";
     //std::cout << To << " temperature now\n";
     stuck++;
@@ -906,7 +917,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   solution.totalCostBest = solutionAux.totalCostActual;
   solution.costsBest = getBestCosts(instance, &solution);
   solution.damagesBest = getBestDamages(instance, &solution);
-  std::cout << solution.totalCostBest << "solucion improved cost\n";
+  std::cout << "solucion improved cost " << solution.totalCostBest << "\n";  
   //printSolution(bestImproved);
   std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
   std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
@@ -973,6 +984,15 @@ void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::
   float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
   csvFile << filename << "," << solution.totalCostBest << "," << totalVariable << "," << totalFixed << "\n";
   csvFile.close();
+}
+
+void printResume(Instance instance, int seed, bool feasible, Solution solution, std::vector<std::vector<double>> fixedCosts, char* filename){
+  std::vector<float> fixedCostsSol = getFixedCostsFromSolution(instance,solution,fixedCosts);
+  std::vector<float> variableCostsSol = solution.costsBest;
+  std::transform(variableCostsSol.begin(), variableCostsSol.end(), fixedCostsSol.begin(), variableCostsSol.begin(), std::minus<float>());
+  float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
+  float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
+  std::cout << filename << "," << seed <<  "," << feasible << "," << solution.totalCostBest << "," << totalVariable << "," << totalFixed << std::endl;
 } 
 
 int main(int argc, char* argv[]) {
@@ -987,7 +1007,7 @@ int main(int argc, char* argv[]) {
       std::cerr << "Usage: quantity of swap moves" << argv[6] << " NAME" << std::endl;
       std::cerr << "Usage: quantity of insert moves" << argv[7] << " NAME" << std::endl;
       std::cerr << "Usage: filename (must be full path)" << argv[8] << " NAME" << std::endl;
-      std::cerr << "Usage: filename (must be full path)" << argv[9] << " NAME" << std::endl;
+      std::cerr << "Usage: maxTime" << argv[9] << " NAME" << std::endl;
 
 
 
@@ -1010,7 +1030,7 @@ int main(int argc, char* argv[]) {
     swapMoves = std::stoi(argv[6]);
     maxInserts = std::stoi(argv[7]);
     filename = argv[8];
-    maxMinutes = std::stoi(argv[9]);
+    maxTime = std::stoi(argv[9]);
     dataFile.open("data.dat", std::ios_base::app);
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -1043,6 +1063,7 @@ int main(int argc, char* argv[]) {
     }
     //print_matrix(fixedCosts);
     createCSVResumeFile(instancia, test, fixedCosts, argv[8]);
+    printResume(instancia, originalSeed, isFeasible(test.damagesBest,MAX_DAMAGE), test, fixedCosts, argv[8]);
     
     dataFile.close();
 
