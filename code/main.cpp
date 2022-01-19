@@ -646,7 +646,7 @@ double getInitialTemperature(Instance instance){
   getSolutionCost(instance, &solution);
   int i = 0;
   double mayor = 0;
-  while(i < 500){
+  while(i < 10){
     std::vector<int> randomTrucks = getRandomTrucks(instance.trucks.size(), generateSeed());
     bool aceptado = false;
     while(aceptado != true){
