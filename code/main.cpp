@@ -27,6 +27,7 @@ int count = 0;
 int lvlLoop = 100;
 std::string filename;
 std::ofstream dataFile;
+int maxMinutes = 1;
 
 size_t generateSeed(){
   seed = seed + 1;
@@ -596,6 +597,7 @@ std::vector<std::vector<int>> twoOptOptimizationBest(Solution solution, Instance
   int truck = 0;
   std::vector<std::vector<int>> improvedSolution;
   for(std::vector<int> route : solution.best){
+    if(route.size() == 0) continue;
     int bestCost = getRouteCost(route, instance);
     std::vector<int> bestNeighbourRoute(route);
     std::vector<int> initialRoute(route);
@@ -687,7 +689,7 @@ void getArcTypeContition(Instance instance,Solution solution, int type){
   std::vector<std::vector<int>> choosen;
   choosen = type == 0 ? solution.best : solution.actual;
   for(std::vector<int> route : choosen){
-    if(route.size() == 0);
+    if(route.size() == 0) continue;
 
     std::vector<std::vector<int>> types = instance.typeMatrix;
     std::vector<std::vector<int>> states = instance.conditionMatrix;
@@ -750,7 +752,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   int stuck = 0;
   double nseconds = 0;
   int minutes = 0;
-  while(minutes < 1  || To > Tend){
+  while((minutes < maxMinutes)  && (To > Tend)){
     //std::cout << getMem << "  now\n";
     //std::cout << To << " temperature now\n";
     stuck++;
@@ -975,7 +977,7 @@ void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::
 
 int main(int argc, char* argv[]) {
     //std::string filename = "../Instances/paper_colombia.txt";
-    if (argc < 9) {
+    if (argc < 10) {
       // Tell the user how to run the program
       std::cerr << "Usage: seed" << argv[1]  <<" NAME" << std::endl;
       std::cerr << "Usage: frost constant" << argv[2] << " NAME" << std::endl;
@@ -985,6 +987,8 @@ int main(int argc, char* argv[]) {
       std::cerr << "Usage: quantity of swap moves" << argv[6] << " NAME" << std::endl;
       std::cerr << "Usage: quantity of insert moves" << argv[7] << " NAME" << std::endl;
       std::cerr << "Usage: filename (must be full path)" << argv[8] << " NAME" << std::endl;
+      std::cerr << "Usage: filename (must be full path)" << argv[9] << " NAME" << std::endl;
+
 
 
       /* "Usage messages" are a conventional way of telling the user
@@ -1006,6 +1010,7 @@ int main(int argc, char* argv[]) {
     swapMoves = std::stoi(argv[6]);
     maxInserts = std::stoi(argv[7]);
     filename = argv[8];
+    maxMinutes = std::stoi(argv[9]);
     dataFile.open("data.dat", std::ios_base::app);
 
     //unsigned seed = std::chrono::system_clock::now().time_since_epoch().count();
