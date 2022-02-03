@@ -415,34 +415,34 @@ Solution greedySolution(Instance instancia){
     return greedy;
 }
 
-// genera solución random que solo verifica restricción de capacidad
-// Solution randomSolution(Instance instancia){
-//     instancia.shuffleReferenceListNodes(generateSeed());
-//     //std::random_device random_device;
-//     std::mt19937 engine{generateSeed()};
-//     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
-//     std::vector<Truck> trucks = instancia.trucks;
-//     std::vector<std::vector<int>> randomSolution(trucks.size());
-//         for(int referencia : instancia.referenceListNodes) {
-//           bool assigned = false;
-//           int i = 0;
-//           Node nodo = instancia.nodes[referencia];
-//           while(assigned == false && nodo.demand != 0){
-//               i = dist(engine);
-//               if(nodo.demand < trucks[i].availableCapacity){
-//                   assigned = true;
-//                   trucks[i].availableCapacity-=nodo.demand;
-//                   randomSolution[trucks[i].id].push_back(nodo.id);
-//               }
-//               i++;
-//           }
-//     }
-//     Solution random = Solution(randomSolution);
-//     random.trucksActual = trucks;
-//     random.trucksNeighbour = trucks;
+//genera solución random que solo verifica restricción de capacidad
+Solution randomSolution(Instance instancia){
+    instancia.shuffleReferenceListNodes(generateSeed());
+    //std::random_device random_device;
+    std::mt19937 engine{generateSeed()};
+    std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
+    std::vector<Truck> trucks = instancia.trucks;
+    std::vector<std::vector<int>> randomSolution(trucks.size());
+        for(int referencia : instancia.referenceListNodes) {
+          bool assigned = false;
+          int i = 0;
+          Node nodo = instancia.nodes[referencia];
+          while(assigned == false && nodo.demand != 0){
+              i = dist(engine);
+              if(nodo.demand < trucks[i].availableCapacity){
+                  assigned = true;
+                  trucks[i].availableCapacity-=nodo.demand;
+                  randomSolution[trucks[i].id].push_back(nodo.id);
+              }
+              i++;
+          }
+    }
+    Solution random = Solution(randomSolution);
+    random.trucksActual = trucks;
+    random.trucksNeighbour = trucks;
 
-//     return random;
-// }
+    return random;
+}
 
 // calcula el daño de una ruta
 float getRouteDamage(std::vector<int> route, Instance instance){
@@ -1046,6 +1046,7 @@ int main(int argc, char* argv[]) {
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
     Solution greedy = greedySolution(instancia);
+    //Solution greedy = randomSolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     //getSolutionDamages(instancia, &test);
     //printTrucks(test.trucksBest);
