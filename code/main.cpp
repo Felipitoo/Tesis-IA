@@ -606,24 +606,33 @@ bool twoOptMove(Instance instancia, Solution* solution, int camion1){
 
 std::vector<std::vector<int>> twoOptOptimizationBest(Solution solution, Instance instance){
   int truck = 0;
+  bool flag = true;
   std::vector<std::vector<int>> improvedSolution;
   for(std::vector<int> route : solution.best){
-    if(route.size() == 0) continue;
-    int bestCost = getRouteCost(route, instance);
+    if(route.size() == 0){
+      improvedSolution.push_back(route);
+      continue;
+    } 
     std::vector<int> bestNeighbourRoute(route);
-    std::vector<int> initialRoute(route);
-    for(size_t i = 0; i < route.size() - 1;i++){
-      std::vector<int> improvedRoute;
-      for(size_t k = i +1; k < route.size(); k++){
-        improvedRoute = twoOptSwap(initialRoute, i, k);
-        double improvedCost = getRouteCost(improvedRoute, instance);
-        if(improvedCost < bestCost){
-          bestCost = improvedCost;
-          bestNeighbourRoute = improvedRoute;
+    while(flag == true){
+      flag = false;
+      int bestCost = getRouteCost(route, instance);
+      std::vector<int> initialRoute(route);
+      for(size_t i = 0; i < route.size() - 1;i++){
+        std::vector<int> improvedRoute;
+        for(size_t k = i +1; k < route.size(); k++){
+          improvedRoute = twoOptSwap(initialRoute, i, k);
+          double improvedCost = getRouteCost(improvedRoute, instance);
+          if(improvedCost < bestCost){
+            flag = true;
+            bestCost = improvedCost;
+            bestNeighbourRoute = improvedRoute;
+          }
         }
       }
+      route = bestNeighbourRoute;
+      truck++;
     }
-    truck++;
     improvedSolution.push_back(bestNeighbourRoute);
   }
   // std::cout << " mjorada";
@@ -904,10 +913,9 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
 
   }
   std::vector<std::vector<int>> bestImproved;
-  for(int k = 0; k < 12; k++){
-    bestImproved = twoOptOptimizationBest(solution, instance);
-    solution.best = bestImproved;
-  }
+  bestImproved = twoOptOptimizationBest(solution, instance);
+  solution.best = bestImproved;
+  
   Solution solutionAux(bestImproved);
   getSolutionDamages(instance, &solutionAux);
   getSolutionCost(instance, &solutionAux);
