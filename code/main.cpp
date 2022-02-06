@@ -28,6 +28,7 @@ int lvlLoop = 100;
 std::string filename;
 std::ofstream dataFile;
 int maxTime = 1;
+std::vector<std::vector<double>> fixedCosts;
 
 size_t generateSeed(){
   seed = seed + 1;
@@ -752,6 +753,36 @@ float throwCoin(){
   return unif(engine);
 }
 
+double getFixedCostFromRoute(std::vector<int> route, std::vector<std::vector<double>> fixedCosts){
+    double cost = 0;
+    if(route.size() == 0){
+        return cost;
+    }
+    std::vector<std::vector<double>> matrix = fixedCosts;
+    cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
+    size_t i = 1;
+    //std::cout << instance.costMatrix[0][route[0]];
+    while(i < route.size()){
+        //std::cout << cost << " cost\n";
+        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
+        cost = cost + matrix[route[i-1]][route[i]];
+        i++; 
+    }
+    return cost;
+}
+
+std::vector<float> getFixedCostsFromSolution(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts){
+  double cost = 0;
+  std::vector<float> fixedCostsSolution(instance.dimension);
+  int i = 0;
+  for(std::vector<int> route: solution.best){
+      cost = getFixedCostFromRoute(route, fixedCosts);
+      fixedCostsSolution[i] = cost;
+      i++;
+  }
+  return fixedCostsSolution;
+}
+
 Solution simulatedAnnealing(Instance instance, Solution initialSolution, double To){
   Solution solution(initialSolution);
   printSolution(solution.actual);
@@ -851,6 +882,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         if(solution.totalCostNeighbour < solution.totalCostBest){
             stuck=0;
             solution.best =  solution.neighbour;
+            solution.costsBest = solution.costsNeighbour;
             solution.totalCostBest =  solution.totalCostNeighbour;
             solution.trucksBest = solution.trucksNeighbour;
             // // std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
@@ -858,7 +890,16 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
             // // Solution solutionAux(bestImproved);
             // // getSolutionDamages(instance, &solutionAux);
             // // getSolutionCost(instance, &solutionAux);
-            std::cout << "la mejor solución tiene coste " << solution.totalCostActual << "\n";
+            std::chrono::steady_clock::time_point clock_end = std::chrono::steady_clock::now();
+            std::chrono::steady_clock::duration time_span = clock_end - clock_begin;
+            nseconds = double(time_span.count()) * std::chrono::steady_clock::period::num / std::chrono::steady_clock::period::den;
+            std::vector<float> fixedCostsSol = getFixedCostsFromSolution(instance,solution,fixedCosts);
+            std::vector<float> variableCostsSol = solution.costsBest;
+            std::transform(variableCostsSol.begin(), variableCostsSol.end(), fixedCostsSol.begin(), variableCostsSol.begin(), std::minus<float>());
+            float totalFixed = std::accumulate(fixedCostsSol.begin(), fixedCostsSol.end(), decltype(fixedCostsSol)::value_type(0));
+            float totalVariable = std::accumulate(variableCostsSol.begin(), variableCostsSol.end(), decltype(variableCostsSol)::value_type(0));
+  
+            std::cout << nseconds << " " << solution.totalCostActual << " " << totalVariable << " " << totalFixed << "\n";
             // std::cout << solutionAux.totalCostNeighbour << "costo mejor improved\n";
             // // std::cout << "solucion improved\n";
             // //printSolution(bestImproved);
@@ -948,35 +989,6 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
   return solution;
 }
 
-double getFixedCostFromRoute(std::vector<int> route, std::vector<std::vector<double>> fixedCosts){
-    double cost = 0;
-    if(route.size() == 0){
-        return cost;
-    }
-    std::vector<std::vector<double>> matrix = fixedCosts;
-    cost = matrix[0][route[0]] + matrix[route[route.size()-1]][0];
-    size_t i = 1;
-    //std::cout << instance.costMatrix[0][route[0]];
-    while(i < route.size()){
-        //std::cout << cost << " cost\n";
-        //std::cout << route[i-1] << " "  << route[i] << " arco\n";
-        cost = cost + matrix[route[i-1]][route[i]];
-        i++; 
-    }
-    return cost;
-}
-
-std::vector<float> getFixedCostsFromSolution(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts){
-  double cost = 0;
-  std::vector<float> fixedCostsSolution(instance.dimension);
-  int i = 0;
-  for(std::vector<int> route: solution.best){
-      cost = getFixedCostFromRoute(route, fixedCosts);
-      fixedCostsSolution[i] = cost;
-      i++;
-  }
-  return fixedCostsSolution;
-}
 
 void createCSVResumeFile(Instance instance, Solution solution, std::vector<std::vector<double>> fixedCosts, char* filename){
   std::ofstream csvFile;
@@ -1045,14 +1057,8 @@ int main(int argc, char* argv[]) {
     originalSeed = std::stod(argv[1]);
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
-    Solution greedy = greedySolution(instancia);
-    //Solution greedy = randomSolution(instancia);
-    Solution test = simulatedAnnealing(instancia, greedy, To); 
-    //getSolutionDamages(instancia, &test);
-    //printTrucks(test.trucksBest);
-    printTrucksPlus(test.trucksBest, test.damagesBest);
-    int numberOfNodes = instancia.dimension;
-    std::vector<std::vector<double>> fixedCosts = createEmptyMatrixDouble(numberOfNodes,numberOfNodes);
+        int numberOfNodes = instancia.dimension;
+    fixedCosts = createEmptyMatrixDouble(numberOfNodes,numberOfNodes);
     int capacidad = instancia.trucks[0].totalCapacity;
     std::vector<std::vector<int>> condicionArcos = instancia.conditionMatrix;
     double CF = (935.19/30.0)/capacidad; //Costo fijo vehicular.
@@ -1070,6 +1076,12 @@ int main(int argc, char* argv[]) {
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
+    Solution greedy = greedySolution(instancia);
+    //Solution greedy = randomSolution(instancia);
+    Solution test = simulatedAnnealing(instancia, greedy, To); 
+    //getSolutionDamages(instancia, &test);
+    //printTrucks(test.trucksBest);
+    printTrucksPlus(test.trucksBest, test.damagesBest);
     //print_matrix(fixedCosts);
     createCSVResumeFile(instancia, test, fixedCosts, argv[8]);
     printResume(instancia, originalSeed, isFeasible(test.damagesBest,MAX_DAMAGE), test, fixedCosts, argv[8]);
