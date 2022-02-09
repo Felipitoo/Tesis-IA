@@ -419,36 +419,45 @@ Solution greedySolution(Instance instancia){
 //genera solución random que solo verifica restricción de capacidad
 Solution randomSolution(Instance instancia){
     //std::random_device random_device;
-    int iterations = 0;
+    size_t iterations;
+    size_t totalAssigned;
     bool done = false;
     std::mt19937 engine{generateSeed()};
     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
-    std::vector<Truck> trucks = instancia.trucks;
     std::vector<std::vector<int>> randomSolution;
+    std::vector<Truck> trucks;
     while(done == false){
       done = true;
+      totalAssigned = 0;
+      trucks = instancia.trucks;
       instancia.shuffleReferenceListNodes(generateSeed());
       randomSolution = std::vector<std::vector<int>>(trucks.size());
       for(int referencia : instancia.referenceListNodes) {
           bool assigned = false;
+          iterations = 0;
           int i = 0;
           Node nodo = instancia.nodes[referencia];
           while(assigned == false && nodo.demand != 0 && iterations < 100){
               i = dist(engine);
               if(nodo.demand < trucks[i].availableCapacity){
                   assigned = true;
+                  totalAssigned++;
                   trucks[i].availableCapacity-=nodo.demand;
                   randomSolution[trucks[i].id].push_back(nodo.id);
               }
               iterations++;
         }
-        done = done && assigned;
+      }
+      if(totalAssigned == instancia.referenceListNodes.size() - 1){
+        done = true;
+      }
+      else {
+        done = false;
       }
     }
     Solution random = Solution(randomSolution);
     random.trucksActual = trucks;
     random.trucksNeighbour = trucks;
-
     return random;
 }
 
@@ -1083,8 +1092,8 @@ int main(int argc, char* argv[]) {
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
-    Solution greedy = greedySolution(instancia);
-    //Solution greedy = randomSolution(instancia);
+    //Solution greedy = greedySolution(instancia);
+    Solution greedy = randomSolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     //getSolutionDamages(instancia, &test);
     //printTrucks(test.trucksBest);
