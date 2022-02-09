@@ -418,25 +418,32 @@ Solution greedySolution(Instance instancia){
 
 //genera solución random que solo verifica restricción de capacidad
 Solution randomSolution(Instance instancia){
-    instancia.shuffleReferenceListNodes(generateSeed());
     //std::random_device random_device;
+    int iterations = 0;
+    bool done = false;
     std::mt19937 engine{generateSeed()};
     std::uniform_int_distribution<int> dist(0, instancia.trucks.size() - 1);
     std::vector<Truck> trucks = instancia.trucks;
-    std::vector<std::vector<int>> randomSolution(trucks.size());
-        for(int referencia : instancia.referenceListNodes) {
+    std::vector<std::vector<int>> randomSolution;
+    while(done == false){
+      done = true;
+      instancia.shuffleReferenceListNodes(generateSeed());
+      randomSolution = std::vector<std::vector<int>>(trucks.size());
+      for(int referencia : instancia.referenceListNodes) {
           bool assigned = false;
           int i = 0;
           Node nodo = instancia.nodes[referencia];
-          while(assigned == false && nodo.demand != 0){
+          while(assigned == false && nodo.demand != 0 && iterations < 100){
               i = dist(engine);
               if(nodo.demand < trucks[i].availableCapacity){
                   assigned = true;
                   trucks[i].availableCapacity-=nodo.demand;
                   randomSolution[trucks[i].id].push_back(nodo.id);
               }
-              i++;
-          }
+              iterations++;
+        }
+        done = done && assigned;
+      }
     }
     Solution random = Solution(randomSolution);
     random.trucksActual = trucks;
@@ -1057,7 +1064,7 @@ int main(int argc, char* argv[]) {
     originalSeed = std::stod(argv[1]);
     Instance instancia = Instance(filename);
     double To = getInitialTemperature(instancia);
-        int numberOfNodes = instancia.dimension;
+    int numberOfNodes = instancia.dimension;
     fixedCosts = createEmptyMatrixDouble(numberOfNodes,numberOfNodes);
     int capacidad = instancia.trucks[0].totalCapacity;
     std::vector<std::vector<int>> condicionArcos = instancia.conditionMatrix;
