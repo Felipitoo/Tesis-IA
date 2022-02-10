@@ -416,6 +416,19 @@ Solution greedySolution(Instance instancia){
     return greedy;
 }
 
+Solution hybridSolution(Instance instancia){
+  Solution initial = greedySolution(instancia);
+  std::vector<std::vector<int>> aux;
+  for(std::vector<int> route : initial.actual){
+    std::shuffle(route.begin(),route.end(), std::default_random_engine(generateSeed()));
+    aux.push_back(route);
+  }
+  initial.actual = aux;
+  initial.neighbour = aux;
+  return initial;
+
+}
+
 //genera solución random que solo verifica restricción de capacidad
 Solution randomSolution(Instance instancia){
     //std::random_device random_device;
@@ -1092,8 +1105,9 @@ int main(int argc, char* argv[]) {
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
+    Solution greedy = hybridSolution(instancia);
     //Solution greedy = greedySolution(instancia);
-    Solution greedy = randomSolution(instancia);
+    //Solution greedy = randomSolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     //getSolutionDamages(instancia, &test);
     //printTrucks(test.trucksBest);
