@@ -399,7 +399,7 @@ Solution greedySolution(Instance instancia){
         size_t i = 0;
         Node nodo = instancia.nodes[referencia];
         while(assigned == false && i < trucks.size() && nodo.demand != 0){
-            if(nodo.demand < trucks[i].availableCapacity){
+            if(nodo.demand <= trucks[i].availableCapacity){
                 assigned = true;
                 trucks[i].availableCapacity-=nodo.demand;
                 greedySolution[trucks[i].id].push_back(nodo.id);
@@ -452,7 +452,7 @@ Solution randomSolution(Instance instancia){
           Node nodo = instancia.nodes[referencia];
           while(assigned == false && nodo.demand != 0 && iterations < 100){
               i = dist(engine);
-              if(nodo.demand < trucks[i].availableCapacity){
+              if(nodo.demand <= trucks[i].availableCapacity){
                   assigned = true;
                   totalAssigned++;
                   trucks[i].availableCapacity-=nodo.demand;
@@ -898,7 +898,6 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
         if(acceptedSwap == true) swapsAccepted++;
         if(acceptedTwoOpt == true) twoOptsAccepted++;
         if(acceptedInsert == true) insertsAccepted++;
-
         solution.actual = solution.neighbour;
         solution.totalCostActual = solution.totalCostNeighbour;
         solution.trucksActual = solution.trucksNeighbour;
@@ -914,6 +913,7 @@ Solution simulatedAnnealing(Instance instance, Solution initialSolution, double 
             solution.costsBest = solution.costsNeighbour;
             solution.totalCostBest =  solution.totalCostNeighbour;
             solution.trucksBest = solution.trucksNeighbour;
+            printSolution(solution.neighbour);
             // // std::vector<std::vector<int>> bestImproved = twoOptOptimizationBest(solution, instance);
             // // //printSolution(bestImproved);
             // // Solution solutionAux(bestImproved);
