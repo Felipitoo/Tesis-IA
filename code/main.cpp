@@ -1119,8 +1119,8 @@ int main(int argc, char* argv[]) {
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
-    //Solution greedy = hybridSolution(instancia);
-    Solution greedy = greedySolution(instancia);
+    Solution greedy = hybridSolution(instancia);
+    //Solution greedy = greedySolution(instancia);
     //Solution greedy = randomSolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     //getSolutionDamages(instancia, &test);
