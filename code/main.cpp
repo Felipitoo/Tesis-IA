@@ -389,31 +389,45 @@ bool insertMoveOriginal(Instance instance, Solution* solution, int camion1, int 
 // Ademas permite generar diferentes soluciones greedy cada vez que se llama debido al shuffle de los nodos cliente.
 
 Solution greedySolution(Instance instancia){
-    instancia.shuffleReferenceListNodes(generateSeed());
-    //printNodes(instancia->nodes);
-    std::vector<Truck> trucks = instancia.trucks;
-    instancia.sortTrucks();
-    std::vector<std::vector<int>> greedySolution(trucks.size());
-    for(int referencia : instancia.referenceListNodes) {
-        bool assigned = false;
-        size_t i = 0;
-        Node nodo = instancia.nodes[referencia];
-        while(assigned == false && i < trucks.size() && nodo.demand != 0){
-            if(nodo.demand <= trucks[i].availableCapacity){
-                assigned = true;
-                trucks[i].availableCapacity-=nodo.demand;
-                greedySolution[trucks[i].id].push_back(nodo.id);
-            }
-            i++;
-        }
-    }
-    Solution greedy = Solution(greedySolution);
-    greedy.trucksActual = trucks;
-    greedy.trucksNeighbour = trucks;
-    // std::cout << "Greedy\n";
-    // printSolution(greedy.actual);
-    // printTrucks(trucks);
-    return greedy;
+  bool done = false;
+  size_t totalAssigned = 0;
+  std::vector<std::vector<int>> greedySolution;
+  std::vector<Truck> trucks;
+  while(done == false){
+      instancia.shuffleReferenceListNodes(generateSeed());
+      //printNodes(instancia->nodes);
+      totalAssigned = 0;
+      trucks = instancia.trucks;
+      instancia.sortTrucks();
+      greedySolution = std::vector<std::vector<int>>(trucks.size());
+      for(int referencia : instancia.referenceListNodes) {
+          bool assigned = false;
+          size_t i = 0;
+          Node nodo = instancia.nodes[referencia];
+          while(assigned == false && i < trucks.size() && nodo.demand != 0){
+              if(nodo.demand <= trucks[i].availableCapacity){
+                  assigned = true;
+                  totalAssigned++;
+                  trucks[i].availableCapacity-=nodo.demand;
+                  greedySolution[trucks[i].id].push_back(nodo.id);
+              }
+              i++;
+          }
+      }
+      if(totalAssigned == instancia.referenceListNodes.size() - 1){
+        done = true;
+      }
+      else {
+        done = false;
+      }
+  }
+  Solution greedy = Solution(greedySolution);
+  greedy.trucksActual = trucks;
+  greedy.trucksNeighbour = trucks;
+  // std::cout << "Greedy\n";
+  // printSolution(greedy.actual);
+  // printTrucks(trucks);
+  return greedy;
 }
 
 Solution hybridSolution(Instance instancia){
@@ -1105,8 +1119,8 @@ int main(int argc, char* argv[]) {
         fixedCosts[j][i] = fixedCosts[i][j];
       }
     }
-    Solution greedy = hybridSolution(instancia);
-    //Solution greedy = greedySolution(instancia);
+    //Solution greedy = hybridSolution(instancia);
+    Solution greedy = greedySolution(instancia);
     //Solution greedy = randomSolution(instancia);
     Solution test = simulatedAnnealing(instancia, greedy, To); 
     //getSolutionDamages(instancia, &test);
